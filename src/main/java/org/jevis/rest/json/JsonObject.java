@@ -18,9 +18,9 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.json;
 
-import java.util.List;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -39,6 +39,7 @@ public class JsonObject {
     public JsonObject() {
     }
 
+    @XmlElement(name = "parent")
     public long getParent() {
         return parent;
     }
@@ -47,6 +48,7 @@ public class JsonObject {
         this.parent = parent;
     }
 
+    @XmlElement(name = "name")
     public String getName() {
         return name;
     }
@@ -55,6 +57,7 @@ public class JsonObject {
         this.name = name;
     }
 
+    @XmlElement(name = "id")
     public long getId() {
         return id;
     }
@@ -63,6 +66,7 @@ public class JsonObject {
         this.id = id;
     }
 
+    @XmlElement(name = "class")
     public String getJevisClass() {
         return jevisclass;
     }

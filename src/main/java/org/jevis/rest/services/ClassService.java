@@ -18,7 +18,7 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.services;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,6 +28,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jevis.jeapi.JEVisClass;
 import org.jevis.jeapi.JEVisException;
+import org.jevis.rest.Config;
+import org.jevis.rest.JsonFactory;
 
 /**
  *

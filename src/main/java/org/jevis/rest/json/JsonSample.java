@@ -18,54 +18,49 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.json;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@XmlRootElement(name = "Class")
-public class JsonJEVisClass {
+@XmlRootElement(name = "Sample")
+public class JsonSample {
 
-    private String name;
-    private String description;
-    private String inheritance;
-    private boolean unique;
+    private String ts;
+    private String value;
+    private String note;
 
-    public JsonJEVisClass() {
+    public JsonSample() {
     }
 
-    public String getName() {
-        return name;
+    @XmlElement(name = "ts")
+    public String getTs() {
+        return ts;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTs(String ts) {
+        this.ts = ts;
     }
 
-    public String getDescription() {
-        return description;
+    @XmlElement(name = "value")
+    public String getValue() {
+        return value;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setValue(String value) {
+        this.value = value;
     }
 
-    public String getInheritance() {
-        return inheritance;
+    @XmlElement(name = "note")
+    public String getNote() {
+        return note;
     }
 
-    public void setInheritance(String inheritance) {
-        this.inheritance = inheritance;
-    }
-
-    public boolean getUnique() {
-        return unique;
-    }
-
-    public void setUnique(boolean unique) {
-        this.unique = unique;
+    public void setNote(String note) {
+        this.note = note;
     }
 }

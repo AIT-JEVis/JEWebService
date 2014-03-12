@@ -18,7 +18,7 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.services;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +32,9 @@ import org.jevis.jeapi.JEVisAttribute;
 import org.jevis.jeapi.JEVisException;
 import org.jevis.jeapi.JEVisObject;
 import org.jevis.jeapi.JEVisSample;
+import org.jevis.rest.Config;
+import org.jevis.rest.JsonFactory;
+import org.jevis.rest.json.JsonSample;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;

@@ -39,7 +39,7 @@ public class Config {
     public static String _schema = "jevis";
 
     public static String getDBHost() {
-        return "192.168.2.55";
+        return _dbip;
     }
 
     public static String getDBPort() {

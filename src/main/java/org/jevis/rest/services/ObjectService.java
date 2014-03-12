@@ -18,26 +18,27 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.services;
 
-import java.net.HttpURLConnection;
 import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jevis.jeapi.JEVisClass;
 import org.jevis.jeapi.JEVisDataSource;
 import org.jevis.jeapi.JEVisException;
 import org.jevis.jeapi.JEVisObject;
+import org.jevis.jeapi.JEVisRelationship;
+import org.jevis.rest.Config;
+import org.jevis.rest.JsonFactory;
+import org.jevis.rest.json.JsonObject;
 
 /**
  *

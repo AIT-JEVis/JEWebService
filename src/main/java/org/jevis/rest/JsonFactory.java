@@ -20,6 +20,11 @@
  */
 package org.jevis.rest;
 
+import org.jevis.rest.json.JsonJEVisClass;
+import org.jevis.rest.json.JsonRelationship;
+import org.jevis.rest.json.JsonSample;
+import org.jevis.rest.json.JsonObject;
+import org.jevis.rest.json.JsonType;
 import java.util.LinkedList;
 import java.util.List;
 import org.jevis.jeapi.JEVisAttribute;
@@ -113,7 +118,7 @@ public class JsonFactory {
         json.setGUIDisplayType(type.getGUIDisplayType());
         json.setPrimitiveType(type.getPrimitiveType());
         json.setName(type.getName());
-        json.setValidity(type.getValidity());
+        json.setValidity("" + type.getValidity());
         return json;
     }
 }

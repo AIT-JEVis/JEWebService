@@ -18,8 +18,9 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.json;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -32,26 +33,31 @@ public class JsonRelationship {
     private long start;
     private long end;
     private int type;
+    private static String pathObj = "/api/rest/objects/";
 
     public JsonRelationship() {
     }
 
-    public long getStart() {
-        return start;
+    @XmlElement(name = "start")
+    public String getStart() {
+//        return start;
+        return pathObj + start;
     }
 
     public void setStart(long start) {
         this.start = start;
     }
 
-    public long getEnd() {
-        return end;
+    @XmlElement(name = "end")
+    public String getEnd() {
+        return pathObj + end;
     }
 
     public void setEnd(long end) {
         this.end = end;
     }
 
+    @XmlElement(name = "type")
     public int getType() {
         return type;
     }

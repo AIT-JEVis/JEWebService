@@ -18,24 +18,27 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.json;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-public class JsonType {
+@XmlRootElement(name = "Class")
+public class JsonJEVisClass {
 
     private String name;
-    private int primitiveType;
-    private String GUIDisplayType;
-    private int GUIPosition;
-    private String validity;
     private String description;
+    private String inheritance;
+    private boolean unique;
 
-    public JsonType() {
+    public JsonJEVisClass() {
     }
 
+    @XmlElement(name = "name")
     public String getName() {
         return name;
     }
@@ -44,43 +47,30 @@ public class JsonType {
         this.name = name;
     }
 
-    public int getPrimitiveType() {
-        return primitiveType;
-    }
-
-    public void setPrimitiveType(int primitiveType) {
-        this.primitiveType = primitiveType;
-    }
-
-    public String getGUIDisplayType() {
-        return GUIDisplayType;
-    }
-
-    public void setGUIDisplayType(String GUIDisplayType) {
-        this.GUIDisplayType = GUIDisplayType;
-    }
-
-    public int getGUIPosition() {
-        return GUIPosition;
-    }
-
-    public void setGUIPosition(int GUIPosition) {
-        this.GUIPosition = GUIPosition;
-    }
-
-    public String getValidity() {
-        return validity;
-    }
-
-    public void setValidity(String validity) {
-        this.validity = validity;
-    }
-
+    @XmlElement(name = "description")
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @XmlElement(name = "inheritance")
+    public String getInheritance() {
+        return inheritance;
+    }
+
+    public void setInheritance(String inheritance) {
+        this.inheritance = inheritance;
+    }
+
+    @XmlElement(name = "unique")
+    public boolean getUnique() {
+        return unique;
+    }
+
+    public void setUnique(boolean unique) {
+        this.unique = unique;
     }
 }

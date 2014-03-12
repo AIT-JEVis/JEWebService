@@ -18,45 +18,25 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.services;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import org.jevis.jeapi.JEVisException;
 
 /**
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@XmlRootElement(name = "Sample")
-public class JsonSample {
+@Path("/api/rest/version")
+public class ServiceVersion {
 
-    private String ts;
-    private String value;
-    private String note;
+    @GET
+    public Response get() throws JEVisException {
+        String re = "3.0.0";
 
-    public JsonSample() {
-    }
+        return Response.ok(re).build();
 
-    public String getTs() {
-        return ts;
-    }
-
-    public void setTs(String ts) {
-        this.ts = ts;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
     }
 }

@@ -18,25 +18,41 @@
  * JEWebService is part of the OpenJEVis project, further project information
  * are published at <http://www.OpenJEVis.org/>.
  */
-package org.jevis.rest;
+package org.jevis.rest.services;
 
+import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import org.jevis.jeapi.JEVisDataSource;
 import org.jevis.jeapi.JEVisException;
+import org.jevis.jeapi.JEVisObject;
+import org.jevis.rest.Config;
+import org.jevis.rest.JEVisWebException;
 
 /**
  *
- * @author Florian Simon <florian.simon@envidatec.com>
+ * @author Florian Simon<florian.simon@openjevis.org>
  */
-@Path("/api/rest/version")
-public class VersionService {
+@Path("/api/rest/roots")
+public class RootService {
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     @GET
-    public Response get() throws JEVisException {
-        String re = "3.0.0";
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<JEVisObject> get() {
+        try {
+            JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
 
-        return Response.ok(re).build();
-
+            List<JEVisObject> roots = ds.getRootObjects();
+            return roots;
+        } catch (JEVisException ex) {
+            throw JEVisWebException.getException(ex);
+        }
     }
 }
