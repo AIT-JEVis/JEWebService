@@ -20,60 +20,85 @@
  */
 package org.jevis.rest.services;
 
-import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jevis.jeapi.JEVisAttribute;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisObject;
-import org.jevis.rest.Config;
-import org.jevis.rest.JsonAttribute;
+import javax.ws.rs.core.SecurityContext;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.api.JEVisObject;
+import org.jevis.rest.JEVisConnectionCache;
 import org.jevis.rest.JsonFactory;
+import org.jevis.rest.json.JsonAttribute;
 
 /**
+ * This Class handels all request for JEVisAttributes
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
 //@Path("/objects/{id}/attributes/{attribute}")
-@Path("/api/rest/objects/{id}/attributes/")
+@Path("/JEWebService/v1/objects/{id}/attributes")
 public class AttributeService {
 
+    /**
+     * Returns an list of all attributes under the given JEVisClass
+     *
+     * @param context
+     * @param httpHeaders
+     * @param id
+     * @return
+     * @throws JEVisException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("{attribute}")
-    public Response getAttribute(
-            @PathParam("id") long id,
-            @PathParam("attribute") String attribute) {
-        try {
-            System.out.println("getAttributes");
-            Config config = new Config();
-            JEVisObject obj = config.getDS("Sys Admin", "jevis").getObject(id);
-            JEVisAttribute att = obj.getAttribute(attribute);
+    public Response getAll(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
+            @PathParam("id") long id) throws JEVisException {
+        System.out.println("getAttributes");
+//        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
 
-            return Response.ok(JsonFactory.buildAttribute(att)).build();
-        } catch (JEVisException ex) {
-            return Response.status(404).entity(ex.getMessage()).build();
-        }
+        JEVisObject obj = ds.getObject(id);
+        System.out.println("Get Attribute for object: " + id);
+        List<JsonAttribute> atts = JsonFactory.buildAttributes(obj.getAttributes());
+        JsonAttribute[] returnList = atts.toArray(new JsonAttribute[atts.size()]);
+
+        return Response.ok(returnList).build();
     }
 
+    /**
+     * Returns an specific attribute
+     *
+     * @param context
+     * @param httpHeaders
+     * @param id
+     * @param attribute
+     * @return
+     * @throws JEVisException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<JsonAttribute> getAll(
+    @Path("/{attribute}")
+    public Response getAttribute(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute) throws JEVisException {
-        System.out.println("getAttributes");
-        Config config = new Config();
-        JEVisObject obj = config.getDS("Sys Admin", "jevis").getObject(id);
-        List<JsonAttribute> attributes = new LinkedList<JsonAttribute>();
-        for (JEVisAttribute att : obj.getAttributes()) {
-            attributes.add(JsonFactory.buildAttribute(att));
-        }
+        System.out.println("getAttribute: " + attribute);
+//        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
 
-        return attributes;
+        JEVisObject obj = ds.getObject(id);
+        System.out.println("Get Attribute for object: " + id);
+        JsonAttribute att = JsonFactory.buildAttribute(obj.getAttribute(attribute));
+
+        return Response.ok(att).build();
     }
 }

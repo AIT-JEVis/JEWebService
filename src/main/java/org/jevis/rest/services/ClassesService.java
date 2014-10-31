@@ -20,50 +20,81 @@
  */
 package org.jevis.rest.services;
 
-import java.util.LinkedList;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jevis.jeapi.JEVisClass;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisType;
-import org.jevis.rest.Config;
+import javax.ws.rs.core.SecurityContext;
+import org.jevis.api.JEVisClass;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.rest.ClassIcon;
+import org.jevis.rest.JEVisConnectionCache;
+import org.jevis.rest.IconCache;
 import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonJEVisClass;
 
 /**
+ * This class handels all the JEVIsOBjects related requests
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@Path("/api/rest/classes")
+@Path("/JEWebService/v1/classes")
 public class ClassesService {
 
+    /**
+     * Returns an List of JEVisClasses as Json
+     *
+     * @param context
+     * @return
+     * @throws JEVisException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<JsonJEVisClass> get(@PathParam("name") String name) throws JEVisException {
+    public Response get(
+            @Context SecurityContext context) throws JEVisException {
+        System.out.println("get classes");
+        //TODO: we could cache the classes because there are very static most of the time
+        // but the Json in the cache and reload the after some time or if an pu/post will be executet on type or class
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+        List<JEVisClass> classes = ds.getJEVisClasses();
+        List<JsonJEVisClass> jclasses = JsonFactory.buildJEVisClass(classes);
 
-        List<JsonJEVisClass> json = new LinkedList<JsonJEVisClass>();
-        Config config = new Config();
-        List<JEVisClass> jclasses = config.getDS("Sys Admin", "jevis").getJEVisClasses();
-        for (JEVisClass jclass : jclasses) {
-            json.add(JsonFactory.buildJEVisClass(jclass));
-        }
-        return json;
+        JsonJEVisClass[] retrunArray = jclasses.toArray(new JsonJEVisClass[jclasses.size()]);
+        System.out.println("return classes: " + retrunArray.length);
+
+        return Response.ok(retrunArray).build();
 
     }
 
+    /**
+     * Returns the requested JEVisClass
+     *
+     * @param context
+     * @param name
+     * @return
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{name}")
-    public Response getClass(@PathParam("name") String name) {
+    public Response getJEVisClass(
+            @Context SecurityContext context,
+            @PathParam("name") String name) {
         try {
-            Config config = new Config();
-            JEVisClass jclass = config.getDS("Sys Admin", "jevis").getJEVisClass(name);
-            System.out.println("Class: " + jclass);
+            JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+
+            JEVisClass jclass = ds.getJEVisClass(name);
 
             return Response.ok(JsonFactory.buildJEVisClass(jclass)).build();
         } catch (JEVisException ex) {
@@ -72,19 +103,47 @@ public class ClassesService {
 
     }
 
+    /**
+     * Returns the Icon of the requested JEVisClass
+     *
+     * @param context
+     * @param name
+     * @return
+     */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{name}/types/{type}")
-    public Response getClassType(@PathParam("name") String name, @PathParam("typer") String type) {
-        try {
-            Config config = new Config();
-            JEVisClass jclass = config.getDS("Sys Admin", "jevis").getJEVisClass(name);
-            JEVisType jtype = jclass.getType(type);
+    @Path("/{name}/icon")
+    public Response getClassIcon(
+            @Context SecurityContext context,
+            @PathParam("name") String name) {
 
-            return Response.ok(JsonFactory.buildType(jtype)).build();
-        } catch (JEVisException ex) {
+        System.out.println("getIcon for class: " + name);
+
+        try {
+            if (IconCache.getInstance().getIcon(name).getIconBytes() != null) {
+                System.out.println("return cached icon");
+                return Response.ok(new ByteArrayInputStream(IconCache.getInstance().getIcon(name).getIconBytes()), MediaType.valueOf("image/png")).build();
+            } else {
+                System.out.println("Create new Icon");
+                JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+
+                JEVisClass jclass = ds.getJEVisClass(name);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                try {
+                    ImageIO.write(jclass.getIcon(), "png", baos);
+                } catch (IOException ex) {
+                    Logger.getLogger(ClassesService.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                byte[] imageData = baos.toByteArray();
+                IconCache.getInstance().addIcon(name, new ClassIcon(name, imageData));
+                System.out.println("return");
+                return Response.ok(new ByteArrayInputStream(imageData), MediaType.valueOf("image/png")).build();
+            }
+        } catch (Exception ex) {
+            System.out.println("error");
             return Response.status(404).entity(ex.getMessage()).build();
         }
 
     }
+
 }

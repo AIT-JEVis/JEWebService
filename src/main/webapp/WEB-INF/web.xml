@@ -22,7 +22,19 @@
         </init-param>
         <init-param>
             <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-            <param-value>com.sun.jersey.api.container.filter.LoggingFilter;org.jevis.webservice.AuthFilter</param-value>
+            <param-value>com.sun.jersey.api.container.filter.LoggingFilter;org.jevis.rest.AuthFilter</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerResponseFilter</param-name>
+            <param-value>org.jevis.rest.ResponseFilter</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
         </init-param>
         
         <load-on-startup>1</load-on-startup>
@@ -37,5 +49,5 @@
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
- 
+
 </web-app>

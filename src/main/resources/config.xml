@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- const.xml -->
+<config>
+    <datasource>
+        <url>127.0.0.1</url>
+        <port>3306</port>
+        <login>jevis</login>
+        <password>password</password>
+    </datasource>
+    <webservice>
+        <port>8080</port>
+        
+    </webservice>    
+</config>

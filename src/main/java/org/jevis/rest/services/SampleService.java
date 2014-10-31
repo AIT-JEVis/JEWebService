@@ -27,38 +27,61 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import org.jevis.jeapi.JEVisAttribute;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisObject;
-import org.jevis.jeapi.JEVisSample;
-import org.jevis.rest.Config;
+import javax.ws.rs.core.SecurityContext;
+import org.jevis.api.JEVisAttribute;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.api.JEVisObject;
+import org.jevis.api.JEVisSample;
+import org.jevis.rest.JEVisConnectionCache;
 import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonSample;
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 /**
+ * his Class handels all the JEVisSample related requests
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@Path("/api/rest/objects/{id}/attributes/{attribute}/samples")
+@Path("/JEWebService/v1/objects/{id}/attributes/{attribute}/samples")
 public class SampleService {
 
+    private static final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss").withZoneUTC();
+
+    /**
+     * Get the samples from an object/Attribute
+     *
+     * @param context
+     * @param httpHeaders
+     * @param id
+     * @param attribute
+     * @param start
+     * @param end
+     * @return
+     * @throws JEVisException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<JsonSample> getClass(
+    public List<JsonSample> getSampples(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
-            @QueryParam("start") String start,
-            @QueryParam("end") String end) throws JEVisException {
+            @QueryParam("from") String start,
+            @QueryParam("until") String end) throws JEVisException {
 
-        Config config = new Config();
-        JEVisObject obj = config.getDS("Sys Admin", "jevis").getObject(id);
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+//        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
+        JEVisObject obj = ds.getObject(id);
         JEVisAttribute att = obj.getAttribute(attribute);
 
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+        //yyyyMMdd'T'HHmmssZ
+//        DateTimeFormatter fmt = ISODateTimeFormat.basicOrdinalDateTimeNoMillis();
         DateTime startDate = null;
         DateTime endDate = null;
         if (start != null) {
@@ -75,6 +98,15 @@ public class SampleService {
         }
     }
 
+    /**
+     * Get all Samples between the given timerange
+     *
+     * @param att
+     * @param start
+     * @param end
+     * @return
+     * @throws JEVisException
+     */
     private List<JsonSample> getInBetweenl(JEVisAttribute att, DateTime start, DateTime end) throws JEVisException {
         List<JsonSample> samples = new LinkedList<JsonSample>();
         for (JEVisSample sample : att.getSamples(start, end)) {
@@ -84,6 +116,13 @@ public class SampleService {
         return samples;
     }
 
+    /**
+     * Get all Samples for an JEVisAttribute
+     *
+     * @param att
+     * @return
+     * @throws JEVisException
+     */
     private List<JsonSample> getAll(JEVisAttribute att) throws JEVisException {
         List<JsonSample> samples = new LinkedList<JsonSample>();
         for (JEVisSample sample : att.getAllSamples()) {

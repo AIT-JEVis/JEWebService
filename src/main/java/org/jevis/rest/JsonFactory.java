@@ -20,48 +20,168 @@
  */
 package org.jevis.rest;
 
+import java.util.ArrayList;
 import org.jevis.rest.json.JsonJEVisClass;
 import org.jevis.rest.json.JsonRelationship;
 import org.jevis.rest.json.JsonSample;
 import org.jevis.rest.json.JsonObject;
 import org.jevis.rest.json.JsonType;
-import java.util.LinkedList;
 import java.util.List;
-import org.jevis.jeapi.JEVisAttribute;
-import org.jevis.jeapi.JEVisClass;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisObject;
-import org.jevis.jeapi.JEVisRelationship;
-import org.jevis.jeapi.JEVisSample;
-import org.jevis.jeapi.JEVisType;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jevis.api.JEVisAttribute;
+import org.jevis.api.JEVisClass;
+import org.jevis.api.JEVisClassRelationship;
+import org.jevis.api.JEVisException;
+import org.jevis.api.JEVisObject;
+import org.jevis.api.JEVisRelationship;
+import org.jevis.api.JEVisSample;
+import org.jevis.api.JEVisType;
+import org.jevis.rest.json.JsonAttribute;
+import org.jevis.rest.json.JsonClassRelationship;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 /**
+ * This Factory can convert JEAPI interfaces into an Json representaion
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
 public class JsonFactory {
 
+    /**
+     * Default date format for attribute dates
+     */
+    private static final DateTimeFormatter attDTF = ISODateTimeFormat.dateTime();
+    /**
+     * default date fomrat for JEVIsSamples Timestamps
+     */
+    private static final DateTimeFormatter sampleDTF = ISODateTimeFormat.dateTime();
+
+    /**
+     * Build an Json representation of an JEVisAttribute list
+     *
+     * @param atts
+     * @return
+     * @throws JEVisException
+     */
+    public static List<JsonAttribute> buildAttributes(List<JEVisAttribute> atts) throws JEVisException {
+        List<JsonAttribute> jAtts = new ArrayList<JsonAttribute>();
+        for (JEVisAttribute att : atts) {
+            jAtts.add(buildAttribute(att));
+        }
+
+        return jAtts;
+    }
+
+    /**
+     * Build an Json representation of an JEVisAttribute
+     *
+     * @param att
+     * @return
+     * @throws JEVisException
+     */
+    public static JsonAttribute buildAttribute(JEVisAttribute att) throws JEVisException {
+        JsonAttribute jatt = new JsonAttribute();
+
+        if (att.hasSample()) {
+            jatt.setBegins(attDTF.print(att.getTimestampFromFirstSample()));
+            jatt.setEnds(attDTF.print(att.getTimestampFromLastSample()));
+            jatt.setSampleCount(att.getSampleCount());
+            //TODO: check if its an binary type, String value will be not taht usefull 
+            jatt.setLatestValue(att.getLatestSample().getValueAsString());
+
+        }
+        jatt.setPeriod(att.getPeriod().toString());
+        jatt.setType(att.getType().getName());
+        if (!att.getUnit().toString().isEmpty()) {
+            jatt.setUnit(att.getUnit().toString());
+        }
+
+        return jatt;
+    }
+
+    /**
+     * Build an Json representaion of an JEVisRelationship list
+     *
+     * @param objs
+     * @return
+     * @throws JEVisException
+     */
+    public static List<JsonRelationship> buildRelationship(List<JEVisRelationship> objs) throws JEVisException {
+        List<JsonRelationship> jRels = new ArrayList<JsonRelationship>();
+        for (JEVisRelationship rel : objs) {
+            JsonRelationship json = new JsonRelationship();
+            json.setStart(rel.getStartObject().getID());
+            json.setEnd(rel.getEndObject().getID());
+            json.setType(rel.getType());
+            jRels.add(json);
+        }
+
+        return jRels;
+    }
+
+    /**
+     * Build an Json representaion of an JEVisClass
+     *
+     * @param objs
+     * @return
+     * @throws JEVisException
+     */
+    public static List<JsonClassRelationship> buildClassRelationship(List<JEVisClassRelationship> objs) throws JEVisException {
+        List<JsonClassRelationship> jRels = new ArrayList<JsonClassRelationship>();
+        for (JEVisClassRelationship rel : objs) {
+            JsonClassRelationship json = new JsonClassRelationship();
+            json.setStart(rel.getStart().getName());
+            json.setEnd(rel.getEnd().getName());
+            json.setType(rel.getType());
+            jRels.add(json);
+        }
+
+        return jRels;
+    }
+
+    /**
+     * Build an Json representaion of an JEVisObject List
+     *
+     * @param objs
+     * @return
+     * @throws JEVisException
+     */
+    public static List<JsonObject> buildObject(List<JEVisObject> objs) throws JEVisException {
+        List<JsonObject> jObjects = new ArrayList<JsonObject>();
+        for (JEVisObject obj : objs) {
+            jObjects.add(buildObject(obj));
+
+        }
+
+        return jObjects;
+    }
+
+    /**
+     * Build an Json representaion of an JEVisObject
+     *
+     * @param obj
+     * @return
+     * @throws JEVisException
+     */
     public static JsonObject buildObject(JEVisObject obj) throws JEVisException {
         JsonObject json = new JsonObject();
         json.setName(obj.getName());
         json.setId(obj.getID());
         json.setJevisClass(obj.getJEVisClass().getName());
+        json.setRelationships(JsonFactory.buildRelationship(obj.getRelationships()));
 
-
-
-
-
-        json.setParent(22l);
-//        List<JsonRelationship> rels = new LinkedList<JsonRelationship>();
-//        for (JEVisRelationship rel : obj.getRelationships()) {
-//            rels.add(JsonFactory.buildRelationship(rel));
-//        }
-//        json.setRelations(rels);
         return json;
     }
 
+    /**
+     * Build an Json representaion of an JEVisRelationship
+     *
+     * @param rel
+     * @return
+     * @throws JEVisException
+     */
     public static JsonRelationship buildRelationship(JEVisRelationship rel) throws JEVisException {
         JsonRelationship json = new JsonRelationship();
         json.setStart(rel.getStartObject().getID());
@@ -70,48 +190,93 @@ public class JsonFactory {
         return json;
     }
 
+    /**
+     * Build an Json representaion of an JEVisClass list
+     *
+     * @param classes
+     * @return
+     * @throws JEVisException
+     */
+    public static List<JsonJEVisClass> buildJEVisClass(List<JEVisClass> classes) throws JEVisException {
+        List<JsonJEVisClass> jclasses = new ArrayList<JsonJEVisClass>();
+
+        for (JEVisClass jc : classes) {
+            jclasses.add(buildJEVisClass(jc));
+        }
+
+        return jclasses;
+    }
+
+    /**
+     * Builds an Json reprensentation of JEVisClass
+     *
+     * @param jclass
+     * @return
+     * @throws JEVisException
+     */
     public static JsonJEVisClass buildJEVisClass(JEVisClass jclass) throws JEVisException {
         JsonJEVisClass json = new JsonJEVisClass();
         json.setName(jclass.getName());
-        if (jclass.getInheritance() != null) {
-            json.setInheritance(jclass.getInheritance().getName());
-        } else {
-            json.setInheritance("null");
-        }
 
+        //Raltionship do this allready
+//        if (jclass.getInheritance() != null) {
+//            json.setInheritance(jclass.getInheritance().getName());
+//        }
         json.setUnique(jclass.isUnique());
         json.setDescription(jclass.getDescription());
+
+        json.setRelationships(buildClassRelationship(jclass.getRelationships()));
+
         return json;
     }
 
-    public static JsonAttribute buildAttribute(JEVisAttribute att) throws JEVisException {
-        JsonAttribute json = new JsonAttribute();
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-
-        json.setName(att.getName());
-        if (att.hasSample()) {
-            json.setFirstTS(fmt.print(att.getTimestampFromFirstSample()));
-            json.setLastTS(fmt.print(att.getTimestampFromLastSample()));
-            json.setLastvalue(att.getLatestSample().getValueAsString());
-        }
-        json.setSamplecount(att.getSampleCount());
-        json.setPeriod("P15m");
-        json.setObject(att.getObject().getID());
-
-
-        return json;
-
-    }
-
+    /**
+     * Build an Json representaion of an JEVIsSample
+     *
+     * @param sample
+     * @return
+     * @throws JEVisException
+     */
     public static JsonSample buildSample(JEVisSample sample) throws JEVisException {
         JsonSample json = new JsonSample();
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-        json.setTs(fmt.print(sample.getTimestamp()));
+
+//        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
+        json.setTs(sampleDTF.print(sample.getTimestamp()));
         json.setValue(sample.getValue().toString());
-        json.setNote(sample.getNote());
+        if (!sample.getNote().isEmpty()) {
+            json.setNote(sample.getNote());
+        }
+
         return json;
     }
 
+    /**
+     * Build an list of json representaions of JEVisTypes
+     *
+     * @param types
+     * @return
+     */
+    public static List<JsonType> buildTypes(List<JEVisType> types) {
+        List<JsonType> jtypes = new ArrayList<JsonType>();
+
+        for (JEVisType type : types) {
+            try {
+                jtypes.add(buildType(type));
+            } catch (JEVisException ex) {
+                Logger.getLogger(JsonFactory.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        return jtypes;
+    }
+
+    /**
+     * Build an JSon representaion of an JEVisType
+     *
+     * @param type
+     * @return
+     * @throws JEVisException
+     */
     public static JsonType buildType(JEVisType type) throws JEVisException {
         JsonType json = new JsonType();
         json.setDescription(type.getDescription());

@@ -20,10 +20,12 @@
  */
 package org.jevis.rest.json;
 
+import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * This Class is used to represents an JEVisObject in JSON by the WebService
  *
  * @author Florian Simon<florian.simon@openjevis.org>
  */
@@ -34,51 +36,85 @@ public class JsonObject {
     private long id;
     private String jevisclass;
     private long parent;
-//    private List<JsonRelationship> relations;
+    private List<JsonRelationship> relations;
 
     public JsonObject() {
     }
 
-    @XmlElement(name = "parent")
-    public long getParent() {
-        return parent;
-    }
-
-    public void setParent(long parent) {
-        this.parent = parent;
-    }
-
+    /**
+     * Returns the name of this JEVisObject
+     *
+     * @return name of the JEVisObject
+     */
     @XmlElement(name = "name")
     public String getName() {
         return name;
     }
 
+    /**
+     * Set the name of the JEVisObject
+     *
+     * @param name
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Returns the name of the JEVisObject.
+     *
+     * @return the unique id of this JEVisObject
+     */
     @XmlElement(name = "id")
     public long getId() {
         return id;
     }
 
+    /**
+     * Set the name of the JEVisObject. The ID will be give by the Database and
+     * will be ignored in the most cases.
+     *
+     * @param id Unique identifier of this JEVisObject
+     */
     public void setId(long id) {
         this.id = id;
     }
 
-    @XmlElement(name = "class")
+    /**
+     * Returns the JEVisClass of this JEVisObject.
+     *
+     * @return JEVisClass of this JEVisObject.
+     */
+    @XmlElement(name = "jevisclass")
     public String getJevisClass() {
         return jevisclass;
     }
 
+    /**
+     * Set the JEVisClass of this JEVisObject.
+     *
+     * @param jevisclass
+     */
     public void setJevisClass(String jevisclass) {
         this.jevisclass = jevisclass;
     }
-//    public List<JsonRelationship> getRelations() {
-//        return relations;
-//    }
-//
-//    public void setRelations(List<JsonRelationship> relations) {
-//        this.relations = relations;
-//    }
+
+    /**
+     * Returns an list of all JEVisRelationships
+     *
+     * @return list of all JEVisRelationships
+     */
+    public List<JsonRelationship> getRelationships() {
+        return relations;
+    }
+
+    /**
+     * Set the List of JEVisRelationships.
+     *
+     *
+     * @param relations
+     */
+    public void setRelationships(List<JsonRelationship> relations) {
+        this.relations = relations;
+    }
 }

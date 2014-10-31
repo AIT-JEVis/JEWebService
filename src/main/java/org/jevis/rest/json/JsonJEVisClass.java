@@ -20,20 +20,23 @@
  */
 package org.jevis.rest.json;
 
+import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * This Class represents an JEVisClass as Json
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@XmlRootElement(name = "Class")
+@XmlRootElement(name = "JEVisClass")
 public class JsonJEVisClass {
 
     private String name;
     private String description;
-    private String inheritance;
+//    private String inheritance;
     private boolean unique;
+    private List<JsonClassRelationship> relationships;
 
     public JsonJEVisClass() {
     }
@@ -56,15 +59,14 @@ public class JsonJEVisClass {
         this.description = description;
     }
 
-    @XmlElement(name = "inheritance")
-    public String getInheritance() {
-        return inheritance;
-    }
-
-    public void setInheritance(String inheritance) {
-        this.inheritance = inheritance;
-    }
-
+//    @XmlElement(name = "inheritance")
+//    public String getInheritance() {
+//        return inheritance;
+//    }
+//
+//    public void setInheritance(String inheritance) {
+//        this.inheritance = inheritance;
+//    }
     @XmlElement(name = "unique")
     public boolean getUnique() {
         return unique;
@@ -73,4 +75,14 @@ public class JsonJEVisClass {
     public void setUnique(boolean unique) {
         this.unique = unique;
     }
+
+    @XmlElement(name = "relationships")
+    public List<JsonClassRelationship> getRelationships() {
+        return relationships;
+    }
+
+    public void setRelationships(List<JsonClassRelationship> relationships) {
+        this.relationships = relationships;
+    }
+
 }

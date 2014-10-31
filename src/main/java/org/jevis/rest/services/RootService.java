@@ -25,9 +25,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import org.jevis.jeapi.JEVisDataSource;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisObject;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.api.JEVisObject;
 import org.jevis.rest.Config;
 import org.jevis.rest.JEVisWebException;
 

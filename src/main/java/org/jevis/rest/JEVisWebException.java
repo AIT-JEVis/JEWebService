@@ -23,14 +23,21 @@ package org.jevis.rest;
 import java.net.HttpURLConnection;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import org.jevis.jeapi.JEVisException;
+import org.jevis.api.JEVisException;
 
 /**
+ * This Class converts JEVisExceptions into WebApplicationException
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
 public class JEVisWebException {
 
+    /**
+     * Convert an EVisExceptions into WebApplicationException
+     *
+     * @param ex
+     * @return
+     */
     public static WebApplicationException getException(JEVisException ex) {
         return new WebApplicationException(
                 Response.status(HttpURLConnection.HTTP_BAD_REQUEST)

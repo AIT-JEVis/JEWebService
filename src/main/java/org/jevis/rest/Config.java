@@ -20,9 +20,13 @@
  */
 package org.jevis.rest;
 
-import org.jevis.jeapi.JEVisDataSource;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.sql.JEVisDataSourceSQL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.XMLConfiguration;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.api.sql.JEVisDataSourceSQL;
 
 /**
  *
@@ -30,35 +34,54 @@ import org.jevis.jeapi.sql.JEVisDataSourceSQL;
  */
 public class Config {
 
+    //@Singleton
     public static String _dbport = "3306";
-    public static String _dbip = "localhost";
+    public static String _dbip = "192.168.2.55";
     public static String _ip = "localhost";
     public static String _port = "5007";
     public static String _dbuser = "jevis";
     public static String _dbpw = "jevistest";
     public static String _schema = "jevis";
+    private static boolean _loadFromFile = true;
 
     public static String getDBHost() {
         return _dbip;
     }
 
     public static String getDBPort() {
-        return "3306";
+        return _dbport;
     }
 
     public static String getDBUser() {
-        return "jevis";
+        return _dbuser;
     }
 
     public static String getDBPW() {
-        return "jevistest";
+        return _dbpw;
     }
 
     public static String getSchema() {
-        return "jevis";
+        return _schema;
     }
 
     public static JEVisDataSource getDS(String username, String pw) throws JEVisException {
+
+        //TODO: i think we can replace this funktion by using the Grizzly server
+        if (_loadFromFile) {
+            try {
+                XMLConfiguration config = new XMLConfiguration("config.xml");
+                _port = config.getString("webservice.port");
+                _dbport = config.getString("datasource.port");
+                _dbip = config.getString("datasource.url");
+                _dbuser = config.getString("datasource.login");
+                _dbpw = config.getString("datasource.password");
+                _schema = config.getString("datasource.schema");
+            } catch (ConfigurationException ex) {
+                Logger.getLogger(Config.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            _loadFromFile = false;
+        }
+
         System.out.println(String.format("Connect to %s %s %s %s %s", getDBHost(), getDBPort(), getSchema(), getDBUser(), getDBPW()));
         JEVisDataSource ds = new JEVisDataSourceSQL(
                 getDBHost(), getDBPort(), getSchema(),

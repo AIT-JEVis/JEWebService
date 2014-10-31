@@ -21,11 +21,14 @@
 package org.jevis.rest.json;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * This Class represents an JEVisType as Json
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
+@XmlRootElement(name = "JEVisType")
 public class JsonType {
 
     private String name;

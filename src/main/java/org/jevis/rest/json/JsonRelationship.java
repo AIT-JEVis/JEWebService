@@ -22,8 +22,11 @@ package org.jevis.rest.json;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.jevis.api.JEVisConstants;
 
 /**
+ * This Class is used to represents an JEVisRelationship in JSON by the
+ * WebService
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
@@ -33,35 +36,65 @@ public class JsonRelationship {
     private long start;
     private long end;
     private int type;
-    private static String pathObj = "/api/rest/objects/";
 
     public JsonRelationship() {
     }
 
-    @XmlElement(name = "start")
-    public String getStart() {
-//        return start;
-        return pathObj + start;
+    /**
+     * Return the start JEVisObject in this relationship.
+     *
+     *
+     * @return ID if the left object in the relationship
+     */
+    @XmlElement(name = "from")
+    public long getStart() {
+        return start;
     }
 
+    /**
+     * Set the start JEVisObject in this relationship.
+     *
+     * @param start
+     */
     public void setStart(long start) {
         this.start = start;
     }
 
-    @XmlElement(name = "end")
-    public String getEnd() {
-        return pathObj + end;
+    /**
+     * Returns the end JEVisObject in this relationship.
+     *
+     * @return
+     */
+    @XmlElement(name = "to")
+    public long getEnd() {
+        return end;
     }
 
+    /**
+     * Set the end JEVisObject in this relationship.
+     *
+     * @param end
+     */
     public void setEnd(long end) {
         this.end = end;
     }
 
+    /**
+     * returns the type of this relationship
+     *
+     * @see JEVisConstants
+     * @return
+     */
     @XmlElement(name = "type")
     public int getType() {
         return type;
     }
 
+    /**
+     * Set the type of this relationhsip
+     *
+     * @param type
+     */
     public void setType(int type) {
         this.type = type;
     }

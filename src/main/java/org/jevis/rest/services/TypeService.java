@@ -20,71 +20,50 @@
  */
 package org.jevis.rest.services;
 
-import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jevis.jeapi.JEVisClass;
-import org.jevis.jeapi.JEVisDataSource;
-import org.jevis.jeapi.JEVisException;
-import org.jevis.jeapi.JEVisType;
-import org.jevis.rest.Config;
+import javax.ws.rs.core.SecurityContext;
+import org.jevis.api.JEVisClass;
+import org.jevis.api.JEVisDataSource;
+import org.jevis.api.JEVisException;
+import org.jevis.api.JEVisType;
+import org.jevis.rest.JEVisConnectionCache;
 import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonType;
 
 /**
  *
- * @author Florian Simon<florian.simon@openjevis.org>
+ * THis Class handels all the JEVisType requests
+ *
+ * @author Florian Simon <florian.simon@envidatec.com>
  */
-@Path("/api/rest/classes/{class}/types")
+@Path("/JEWebService/v1/classes/{name}/types")
 public class TypeService {
 
-    /**
-     *
-     * @param id
-     * @return
-     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<JsonType> get(@PathParam("class") String classname) throws JEVisException {
-        JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
-        JEVisClass jclass = ds.getJEVisClass(classname);
+    public Response getAll(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
+            @PathParam("name") String name) throws JEVisException {
+        System.out.println("getTypes");
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
 
-        List<JEVisType> types = jclass.getTypes();
-        List<JsonType> jsons = new LinkedList<JsonType>();
-        for (JEVisType type : types) {
-            jsons.add(JsonFactory.buildType(type));
-        }
+        JEVisClass jclass = ds.getJEVisClass(name);
 
+        List<JEVisType> typs = jclass.getTypes();
+        List<JsonType> jtypes = JsonFactory.buildTypes(typs);
+        JsonType[] retrunArray = jtypes.toArray(new JsonType[jtypes.size()]);
 
-        return jsons;
-
+        System.out.println("return total: " + retrunArray.length);
+        return Response.ok(retrunArray).build();
     }
 
-    /**
-     *
-     * @param type
-     * @param classname
-     * @return
-     * @throws JEVisException
-     */
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{type}")
-    public Response getByName(
-            @QueryParam("type") String type,
-            @PathParam("class") String classname) throws JEVisException {
-
-        JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
-
-        JEVisClass jevClass = ds.getJEVisClass(classname);
-
-        return Response.ok(JsonFactory.buildType(jevClass.getType(type))).build();
-
-    }
 }
