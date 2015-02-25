@@ -92,10 +92,10 @@ public class JsonFactory {
             jatt.setLatestValue(att.getLatestSample().getValueAsString());
 
         }
-        jatt.setPeriod(att.getPeriod().toString());
+        jatt.setPeriod(att.getInputSampleRate().toString());
         jatt.setType(att.getType().getName());
-        if (!att.getUnit().toString().isEmpty()) {
-            jatt.setUnit(att.getUnit().toString());
+        if (!att.getDisplayUnit().toString().isEmpty()) {
+            jatt.setUnit(att.getDisplayUnit().toString());
         }
 
         return jatt;
