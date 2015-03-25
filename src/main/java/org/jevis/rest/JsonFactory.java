@@ -56,7 +56,7 @@ public class JsonFactory {
     /**
      * default date fomrat for JEVIsSamples Timestamps
      */
-    private static final DateTimeFormatter sampleDTF = ISODateTimeFormat.dateTime();
+    public static final DateTimeFormatter sampleDTF = ISODateTimeFormat.dateTime();
 
     /**
      * Build an Json representation of an JEVisAttribute list
@@ -156,6 +156,37 @@ public class JsonFactory {
         }
 
         return jObjects;
+    }
+
+    public static List<JsonObject> buildDetailedObject(List<JEVisObject> objs) throws JEVisException {
+        List<JsonObject> jObjects = new ArrayList<JsonObject>();
+        for (JEVisObject obj : objs) {
+            jObjects.add(buildDetailedObject(obj));
+
+        }
+
+        return jObjects;
+    }
+
+    public static JsonObject buildDetailedObject(JEVisObject obj) throws JEVisException {
+        JsonObject json = new JsonObject();
+        json.setName(obj.getName());
+        json.setId(obj.getID());
+        json.setJevisClass(obj.getJEVisClass().getName());
+        json.setRelationships(JsonFactory.buildRelationship(obj.getRelationships()));
+        List<JsonAttribute> attributes = new ArrayList<JsonAttribute>();
+        for (JEVisAttribute att : obj.getAttributes()) {
+            attributes.add(buildAttribute(att));
+        }
+        json.setAttributes(attributes);
+
+        List<JsonObject> children = new ArrayList<JsonObject>();
+        for (JEVisObject child : obj.getChildren()) {
+            children.add(buildDetailedObject(child));
+        }
+        json.setObjects(children);
+
+        return json;
     }
 
     /**

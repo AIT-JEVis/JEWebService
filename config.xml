@@ -2,8 +2,8 @@
 <!-- const.xml -->
 <config>
     <datasource>
-        <url>192.168.2.55</url>
-        <port>3306</port>
+        <url>openjevis.org</url>
+        <port>13306</port>
         <login>jevis</login>
         <password>jevistest</password>
 	<schema>jevis</schema>

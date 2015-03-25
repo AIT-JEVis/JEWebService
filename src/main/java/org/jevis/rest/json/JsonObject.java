@@ -37,8 +37,28 @@ public class JsonObject {
     private String jevisclass;
     private long parent;
     private List<JsonRelationship> relations;
+    private List<JsonObject> objects;
+    private List<JsonAttribute> attributes;
 
     public JsonObject() {
+    }
+
+    @XmlElement(name = "attributes")
+    public List<JsonAttribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<JsonAttribute> attributes) {
+        this.attributes = attributes;
+    }
+
+    @XmlElement(name = "objects")
+    public List<JsonObject> getObjects() {
+        return objects;
+    }
+
+    public void setObjects(List<JsonObject> objects) {
+        this.objects = objects;
     }
 
     /**
@@ -117,4 +137,13 @@ public class JsonObject {
     public void setRelationships(List<JsonRelationship> relations) {
         this.relations = relations;
     }
+
+    public long getParent() {
+        return parent;
+    }
+
+    public void setParent(long parent) {
+        this.parent = parent;
+    }
+
 }

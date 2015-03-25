@@ -34,6 +34,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.SecurityContext;
 import org.jevis.api.JEVisAttribute;
 import org.jevis.api.JEVisDataSource;
 import org.jevis.api.JEVisException;
@@ -51,47 +52,78 @@ import org.joda.time.DateTime;
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
-@Path("/api/rest/objects/{id}/attributes/{attribute}/chart")
+@Path("/JEWebService/v1/objects/{id}/attributes/{attribute}/samples/chart")
 public class ChartService {
 
+    /**
+     * Get the samples from an object/Attribute
+     *
+     * @param context
+     * @param httpHeaders
+     * @param id
+     * @param attribute
+     * @return
+     * @throws JEVisException
+     */
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public String getClass(
+    public String getSampples(
+            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
-            @PathParam("attribute") String attribute,
-            @QueryParam("start") String start,
-            @QueryParam("end") String end) throws JEVisException {
+            @PathParam("attribute") String attribute) throws JEVisException {
 
-        System.out.println("GetChart");
-
-        System.out.println("JEVis-ID: " + httpHeaders.getRequestHeaders().get(AuthFilter.HTTP_HEADER_USER));
-        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
-//        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource("Sys Admin");
-
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+//        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
         JEVisObject obj = ds.getObject(id);
-//        JEVisObject obj = Config.getDS("Sys Admin", "jevis").getObject(id);
         JEVisAttribute att = obj.getAttribute(attribute);
 
-//        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-//        DateTime startDate = null;
-//        DateTime endDate = null;
-//        if (start != null) {
-//            startDate = fmt.parseDateTime(start);
-//        }
-//        if (end != null) {
-//            endDate = fmt.parseDateTime(end);
-//        }
-//
-//        if (start == null && end == null) {
-//            return getAll(att);
-//        } else {
-//            return getInbetween(att, startDate, endDate);
-//        }
+        //yyyyMMdd'T'HHmmssZ
+//        DateTimeFormatter fmt = ISODateTimeFormat.basicOrdinalDateTimeNoMillis();
+        DateTime startDate = null;
+        DateTime endDate = null;
+
         List<JEVisSample> samples = att.getAllSamples();
         return buildHTML(samples.subList(samples.size() - 31, samples.size() - 1), att);
     }
 
+//    @GET
+//    @Produces(MediaType.TEXT_HTML)
+//    public String getClass(
+//            @Context HttpHeaders httpHeaders,
+//            @PathParam("id") long id,
+//            @PathParam("attribute") String attribute,
+//            @QueryParam("start") String start,
+//            @QueryParam("end") String end) throws JEVisException {
+//
+//        System.out.println("GetChart");
+//
+//        System.out.println("JEVis-ID: " + httpHeaders.getRequestHeaders().get(AuthFilter.HTTP_HEADER_USER));
+//        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
+////        JEVisDataSource ds = DSConnectionHandler.getInstance().getDataSource("Sys Admin");
+//
+//        JEVisObject obj = ds.getObject(id);
+////        JEVisObject obj = Config.getDS("Sys Admin", "jevis").getObject(id);
+//        JEVisAttribute att = obj.getAttribute(attribute);
+//
+////        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+////        DateTime startDate = null;
+////        DateTime endDate = null;
+////        if (start != null) {
+////            startDate = fmt.parseDateTime(start);
+////        }
+////        if (end != null) {
+////            endDate = fmt.parseDateTime(end);
+////        }
+////
+////        if (start == null && end == null) {
+////            return getAll(att);
+////        } else {
+////            return getInbetween(att, startDate, endDate);
+////        }
+//        List<JEVisSample> samples = att.getAllSamples();
+//        return buildHTML(samples.subList(samples.size() - 31, samples.size() - 1), att);
+//    }
     private String buildHTML(List<JEVisSample> samples, JEVisAttribute attribute) {
         String title = "Chart Demo";
         String chartLib = "http://alpha.openjevis.org/js/Chart.js";

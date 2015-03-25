@@ -4,7 +4,7 @@
     <groupId>org.jevis.rest</groupId>
     <artifactId>JEWebService</artifactId>
     <packaging>war</packaging>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.2</version>
     <name>JEWebService</name>
     <url>http://maven.apache.org</url>
     <dependencies>

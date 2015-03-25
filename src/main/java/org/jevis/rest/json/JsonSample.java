@@ -22,6 +22,8 @@ package org.jevis.rest.json;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.jevis.api.JEVisAttribute;
+import org.jevis.api.JEVisSample;
 
 /**
  * This Class represents an JEVisSample as Json
@@ -64,4 +66,5 @@ public class JsonSample {
     public void setNote(String note) {
         this.note = note;
     }
+
 }

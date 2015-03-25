@@ -23,6 +23,7 @@ package org.jevis.rest.services;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -39,8 +40,6 @@ import org.jevis.api.JEVisClass;
 import org.jevis.api.JEVisDataSource;
 import org.jevis.api.JEVisException;
 import org.jevis.api.JEVisObject;
-import org.jevis.api.JEVisRelationship;
-import org.jevis.rest.AuthFilter;
 import org.jevis.rest.JEVisConnectionCache;
 import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonObject;
@@ -65,6 +64,7 @@ public class ObjectService {
      * @param inherit
      * @param parent
      * @param name
+     * @param detailed
      * @param child
      * @param jclass
      * @return
@@ -78,6 +78,7 @@ public class ObjectService {
             @DefaultValue("") @QueryParam("class") String jclass,
             @DefaultValue("true") @QueryParam("inherit") boolean inherit,
             @DefaultValue("") @QueryParam("name") String name,
+            @DefaultValue("false") @QueryParam("detail") boolean detailed,
             @QueryParam("parent") long parent,
             @QueryParam("child") long child) {
 
@@ -114,7 +115,16 @@ public class ObjectService {
                 objects = filterClasses(objects, filterClass, inherit);
                 System.out.println("Total Objects after Classfilter: " + objects.size());
             }
-            List<JsonObject> jsonObjects = JsonFactory.buildObject(objects);
+
+//             List<JsonObject> jsonObjects = JsonFactory.buildObject(objects);
+            List<JsonObject> jsonObjects;
+            if (detailed) {
+                System.out.println("make detailed");
+                jsonObjects = JsonFactory.buildDetailedObject(objects);
+            } else {
+                System.out.println("do not detailed");
+                jsonObjects = JsonFactory.buildObject(objects);
+            }
 
             JsonObject[] returnList = jsonObjects.toArray(new JsonObject[jsonObjects.size()]);
             System.out.println("final return total: " + returnList.length);
@@ -127,11 +137,70 @@ public class ObjectService {
 
     }
 
+    @DELETE
+    @Path("/{id}")
+    public Response deleteObject(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
+            @PathParam("id") long id) {
+
+        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+
+        if (id == -999) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Missing id path parameter").build();
+        }
+
+        try {
+            JEVisObject obj = ds.getObject(id);
+            obj.delete();
+            System.out.println("Object " + id + "delete");
+            return Response.status(Response.Status.OK).build();
+        } catch (JEVisException jex) {
+            //TODO: check case...
+            jex.printStackTrace();
+            return Response.status(Response.Status.FORBIDDEN).entity(jex.getMessage()).build();
+        } catch (NullPointerException npe) {
+            npe.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(npe).build();
+        }
+
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response postObject(
+            @Context SecurityContext context,
+            @Context HttpHeaders httpHeaders,
+            JsonObject object) {
+
+        try {
+            JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+
+            JEVisObject parent = ds.getObject(object.getParent());
+            if (parent == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Parent not found").build();
+            }
+            JEVisClass jclass = ds.getJEVisClass(object.getJevisClass());
+            if (jclass == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("JEVisClass not found").build();
+            }
+
+            JEVisObject newObj = parent.buildObject(object.getName(), jclass);
+            JsonObject job = JsonFactory.buildObject(newObj);
+            return Response.ok(job).build();
+
+        } catch (Exception ex) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ex).build();
+        }
+    }
+
     /**
      * Get the JEVisObject with the given id.
      *
      * @param context
      * @param httpHeaders
+     * @param detailed
      * @param id jevis internal id of an JEVisObject
      * @return
      */
@@ -141,6 +210,7 @@ public class ObjectService {
     public Response getObject(
             @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
+            @DefaultValue("false") @QueryParam("detail") boolean detailed,
             @DefaultValue("-99999") @PathParam("id") long id) {
         try {
             System.out.println("getObject: " + id);
@@ -152,18 +222,31 @@ public class ObjectService {
             }
 
             JEVisObject obj = ds.getObject(id);
-            JsonObject jobj = JsonFactory.buildObject(obj);
-
-            for (JEVisRelationship rel : obj.getRelationships()) {
-                jobj.setRelationships(null);
+            if (obj == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
 
-            System.out.println("Obj: " + obj);
-            return Response.ok(JsonFactory.buildObject(obj)).build();
-        } catch (JEVisException ex) {
-            return Response.status(404).entity(ex.getMessage()).build();
-        }
+//            JsonObject jobj = JsonFactory.buildObject(obj);
+            JsonObject jobj;
+            if (detailed) {
+                jobj = JsonFactory.buildDetailedObject(obj);
+            } else {
+                jobj = JsonFactory.buildObject(obj);
+            }
 
+//            for (JEVisRelationship rel : obj.getRelationships()) {
+//                jobj.setRelationships(null);
+//            }
+            System.out.println("Obj: " + obj);
+            return Response.ok(jobj).build();
+        } catch (JEVisException jex) {
+            //TODO: check case...
+            jex.printStackTrace();
+            return Response.status(Response.Status.NOT_FOUND).entity(jex.getMessage()).build();
+        } catch (NullPointerException npe) {
+            npe.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(npe).build();
+        }
     }
 
     /**
@@ -202,40 +285,40 @@ public class ObjectService {
      * @param json
      * @return
      */
-    @POST
-//    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response post(
-            @Context HttpHeaders httpHeaders,
-            JsonObject json) {
-        try {
-            System.out.println("json: " + json);
-            System.out.println("create new obj: " + json.getName() + " " + json.getJevisClass());
-//            JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
-            JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
-
-            System.out.println("get Parent Object: " + json.getRelationships().get(0));
-//            if (json.getRelationships().get(0).getType()) {
+//    @POST
+////    @Produces(MediaType.APPLICATION_JSON)
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    public Response post(
+//            @Context HttpHeaders httpHeaders,
+//            JsonObject json) {
+//        try {
+//            System.out.println("json: " + json);
+//            System.out.println("create new obj: " + json.getName() + " " + json.getJevisClass());
+////            JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
+//            JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(httpHeaders.getRequestHeaders().getFirst(AuthFilter.HTTP_HEADER_USER));
 //
-//            }
-
-            JEVisObject parentObj = ds.getObject(440l);//TODO replace with code
-            System.out.println("Found parent: " + parentObj);
-
-            System.out.println("Get JEVisClass: " + json.getJevisClass());
-            JEVisClass jevClass = ds.getJEVisClass(json.getJevisClass());
-            System.out.println("Found JEVisClass: " + jevClass);
-
-            System.out.println("Build new Object: " + json.getName() + " " + jevClass.getName());
-            JEVisObject newObj = parentObj.buildObject(json.getName(), jevClass);
-
-            System.out.println("Commit");
-            newObj.commit();
-            System.out.println("done");
-            return Response.ok(JsonFactory.buildObject(newObj)).build();
-        } catch (JEVisException ex) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
-        }
-
-    }
+//            System.out.println("get Parent Object: " + json.getRelationships().get(0));
+////            if (json.getRelationships().get(0).getType()) {
+////
+////            }
+//
+//            JEVisObject parentObj = ds.getObject(440l);//TODO replace with code
+//            System.out.println("Found parent: " + parentObj);
+//
+//            System.out.println("Get JEVisClass: " + json.getJevisClass());
+//            JEVisClass jevClass = ds.getJEVisClass(json.getJevisClass());
+//            System.out.println("Found JEVisClass: " + jevClass);
+//
+//            System.out.println("Build new Object: " + json.getName() + " " + jevClass.getName());
+//            JEVisObject newObj = parentObj.buildObject(json.getName(), jevClass);
+//
+//            System.out.println("Commit");
+//            newObj.commit();
+//            System.out.println("done");
+//            return Response.ok(JsonFactory.buildObject(newObj)).build();
+//        } catch (JEVisException ex) {
+//            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
+//        }
+//
+//    }
 }
