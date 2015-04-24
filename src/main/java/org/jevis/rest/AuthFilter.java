@@ -45,7 +45,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
         System.out.println("Path: " + containerRequest.getPath());
 //        if(WhiteList.starts(path)){
-//            //allow without auth 
+//            //allow without auth
 //        }
 
         //Example "Basic U3lzIEFkbWluOmpldmlz"
@@ -59,17 +59,21 @@ public class AuthFilter implements ContainerRequestFilter {
             if (Base64.isBase64(auth)) {
                 String[] dauth = (new String(Base64.decode(auth))).split(":");
                 if (dauth.length == 2) {
+                    JEVisConnectionCache.getInstance().cleanUp();
+
                     String username = dauth[0];
                     String password = dauth[1];
 
                     User user = new User(username, password, auth);
+
                     if (JEVisConnectionCache.getInstance().contains(auth)) {
-//                        System.out.println("User is allready cached");
+                        System.out.println("User is allready cached");
                         containerRequest.setSecurityContext(new Authorizer(user));
                     } else {
                         try {
                             //check if the login is ok
                             //TODO: handel deffreent errors
+                            System.out.println("Create new DS Connection");
                             JEVisDataSource ds = Config.getDS(username, password);
                             ds.getCurrentUser();//TODO. check more...
 

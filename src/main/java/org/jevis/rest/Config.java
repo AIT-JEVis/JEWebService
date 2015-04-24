@@ -85,8 +85,7 @@ public class Config {
         System.out.println(String.format("Connect to %s %s %s %s %s", getDBHost(), getDBPort(), getSchema(), getDBUser(), getDBPW()));
         JEVisDataSource ds = new JEVisDataSourceSQL(
                 getDBHost(), getDBPort(), getSchema(),
-                getDBUser(), getDBPW(),
-                username, pw);
+                getDBUser(), getDBPW());
         if (ds.connect(username, pw)) {
             System.out.println("Connected user: " + username);
         } else {

@@ -177,7 +177,10 @@ public class SampleService {
 
         JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
         try {
+            System.out.println("DS is connected? " + ds.isConnectionAlive());
+            System.out.println("getObject: " + id);
             JEVisObject object = ds.getObject(id);
+            System.out.println("done");
             JEVisAttribute att = object.getAttribute(attribute);
 
             List<JEVisSample> newSamples = toJEVisSample(att, samples);
