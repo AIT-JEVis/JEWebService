@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.jevis.api.JEVisAttribute;
 import org.jevis.api.JEVisClass;
 import org.jevis.api.JEVisClassRelationship;
+import org.jevis.api.JEVisConstants;
 import org.jevis.api.JEVisException;
 import org.jevis.api.JEVisObject;
 import org.jevis.api.JEVisRelationship;
@@ -88,9 +89,13 @@ public class JsonFactory {
             jatt.setBegins(attDTF.print(att.getTimestampFromFirstSample()));
             jatt.setEnds(attDTF.print(att.getTimestampFromLastSample()));
             jatt.setSampleCount(att.getSampleCount());
-            //TODO: check if its an binary type, String value will be not taht usefull 
-            jatt.setLatestValue(att.getLatestSample().getValueAsString());
-
+            //TODO: handle other types appropriately 
+            JEVisSample sample = att.getLatestSample();
+            if(att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
+                jatt.setLatestValue(sample.getValueAsFile().getFilename());
+            } else {
+                jatt.setLatestValue(sample.getValueAsString());
+            }
         }
         jatt.setPeriod(att.getInputSampleRate().toString());
         jatt.setType(att.getType().getName());
