@@ -273,7 +273,16 @@ public class JsonFactory {
         JsonSample json = new JsonSample();
 
         json.setTs(sampleDTF.print(sample.getTimestamp()));
-        json.setValue(sample.getValue().toString());
+
+        //TODO: handle other types appropriately 
+        // format sample-value according to the primitive type
+        int primitiveType = sample.getAttribute().getType().getPrimitiveType();
+        if(primitiveType == JEVisConstants.PrimitiveType.FILE) {
+            json.setValue(sample.getValueAsFile().getFilename());
+        } else {
+            json.setValue(sample.getValueAsString());
+        }
+        
         if (!sample.getNote().isEmpty()) {
             json.setNote(sample.getNote());
         }
