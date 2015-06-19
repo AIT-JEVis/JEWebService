@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.jevis.api.JEVisAttribute;
 import org.jevis.api.JEVisClass;
 import org.jevis.api.JEVisClassRelationship;
+import org.jevis.api.JEVisConstants;
 import org.jevis.api.JEVisException;
 import org.jevis.api.JEVisObject;
 import org.jevis.api.JEVisRelationship;
@@ -43,7 +44,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 /**
- * This Factory can convert JEAPI interfaces into an Json representaion
+ * This Factory can convert JEAPI interfaces into a JSON representation
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
@@ -54,12 +55,12 @@ public class JsonFactory {
      */
     private static final DateTimeFormatter attDTF = ISODateTimeFormat.dateTime();
     /**
-     * default date fomrat for JEVIsSamples Timestamps
+     * default date format for JEVIsSamples Timestamps
      */
     public static final DateTimeFormatter sampleDTF = ISODateTimeFormat.dateTime();
 
     /**
-     * Build an Json representation of an JEVisAttribute list
+     * Build a JSON representation of a JEVisAttribute list
      *
      * @param atts
      * @return
@@ -75,7 +76,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representation of an JEVisAttribute
+     * Build a JSON representation of a JEVisAttribute
      *
      * @param att
      * @return
@@ -88,9 +89,13 @@ public class JsonFactory {
             jatt.setBegins(attDTF.print(att.getTimestampFromFirstSample()));
             jatt.setEnds(attDTF.print(att.getTimestampFromLastSample()));
             jatt.setSampleCount(att.getSampleCount());
-            //TODO: check if its an binary type, String value will be not taht usefull 
-            jatt.setLatestValue(att.getLatestSample().getValueAsString());
-
+            //TODO: handle other types appropriately 
+            JEVisSample sample = att.getLatestSample();
+            if(att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
+                jatt.setLatestValue(sample.getValueAsFile().getFilename());
+            } else {
+                jatt.setLatestValue(sample.getValueAsString());
+            }
         }
         jatt.setPeriod(att.getInputSampleRate().toString());
         jatt.setType(att.getType().getName());
@@ -102,7 +107,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisRelationship list
+     * Build a JSON representation of a JEVisRelationship list
      *
      * @param objs
      * @return
@@ -122,7 +127,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisClass
+     * Build a JSON representation of a JEVisClass
      *
      * @param objs
      * @return
@@ -142,7 +147,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisObject List
+     * Build a JSON representation of a JEVisObject list
      *
      * @param objs
      * @return
@@ -190,7 +195,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisObject
+     * Build a JSON representation of a JEVisObject
      *
      * @param obj
      * @return
@@ -207,7 +212,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisRelationship
+     * Build a JSON representation of a JEVisRelationship
      *
      * @param rel
      * @return
@@ -222,7 +227,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVisClass list
+     * Build a JSON representation of a JEVisClass list
      *
      * @param classes
      * @return
@@ -239,7 +244,7 @@ public class JsonFactory {
     }
 
     /**
-     * Builds an Json reprensentation of JEVisClass
+     * Builds a JSON representation of a JEVisClass
      *
      * @param jclass
      * @return
@@ -249,10 +254,6 @@ public class JsonFactory {
         JsonJEVisClass json = new JsonJEVisClass();
         json.setName(jclass.getName());
 
-        //Raltionship do this allready
-//        if (jclass.getInheritance() != null) {
-//            json.setInheritance(jclass.getInheritance().getName());
-//        }
         json.setUnique(jclass.isUnique());
         json.setDescription(jclass.getDescription());
 
@@ -262,7 +263,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an Json representaion of an JEVIsSample
+     * Build a JSON representation of a JEVIsSample
      *
      * @param sample
      * @return
@@ -271,9 +272,17 @@ public class JsonFactory {
     public static JsonSample buildSample(JEVisSample sample) throws JEVisException {
         JsonSample json = new JsonSample();
 
-//        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
         json.setTs(sampleDTF.print(sample.getTimestamp()));
-        json.setValue(sample.getValue().toString());
+
+        //TODO: handle other types appropriately 
+        // format sample-value according to the primitive type
+        int primitiveType = sample.getAttribute().getType().getPrimitiveType();
+        if(primitiveType == JEVisConstants.PrimitiveType.FILE) {
+            json.setValue(sample.getValueAsFile().getFilename());
+        } else {
+            json.setValue(sample.getValueAsString());
+        }
+        
         if (!sample.getNote().isEmpty()) {
             json.setNote(sample.getNote());
         }
@@ -282,7 +291,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an list of json representaions of JEVisTypes
+     * Build a list of JSON representation of list of JEVisTypes
      *
      * @param types
      * @return
@@ -302,7 +311,7 @@ public class JsonFactory {
     }
 
     /**
-     * Build an JSon representaion of an JEVisType
+     * Build a JSON representation of a JEVisType
      *
      * @param type
      * @return
