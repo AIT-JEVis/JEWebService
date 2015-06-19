@@ -89,9 +89,9 @@ public class JsonFactory {
             jatt.setBegins(attDTF.print(att.getTimestampFromFirstSample()));
             jatt.setEnds(attDTF.print(att.getTimestampFromLastSample()));
             jatt.setSampleCount(att.getSampleCount());
-            //TODO: handle other types appropriately 
+            //TODO: handle other types appropriately
             JEVisSample sample = att.getLatestSample();
-            if(att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
+            if (att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
                 jatt.setLatestValue(sample.getValueAsFile().getFilename());
             } else {
                 jatt.setLatestValue(sample.getValueAsString());
@@ -99,8 +99,12 @@ public class JsonFactory {
         }
         jatt.setPeriod(att.getInputSampleRate().toString());
         jatt.setType(att.getType().getName());
-        if (!att.getDisplayUnit().toString().isEmpty()) {
-            jatt.setUnit(att.getDisplayUnit().toString());
+        if (att.getInputUnit() != null && !att.getInputUnit().toString().isEmpty()) {
+            jatt.setUnit(att.getInputUnit().toString());
+        }
+
+        if (att.getDisplayUnit() != null && !att.getDisplayUnit().toString().isEmpty()) {
+            jatt.setDisplayUnit(att.getDisplayUnit().toString());
         }
 
         return jatt;
@@ -274,15 +278,15 @@ public class JsonFactory {
 
         json.setTs(sampleDTF.print(sample.getTimestamp()));
 
-        //TODO: handle other types appropriately 
+        //TODO: handle other types appropriately
         // format sample-value according to the primitive type
         int primitiveType = sample.getAttribute().getType().getPrimitiveType();
-        if(primitiveType == JEVisConstants.PrimitiveType.FILE) {
+        if (primitiveType == JEVisConstants.PrimitiveType.FILE) {
             json.setValue(sample.getValueAsFile().getFilename());
         } else {
             json.setValue(sample.getValueAsString());
         }
-        
+
         if (!sample.getNote().isEmpty()) {
             json.setNote(sample.getNote());
         }

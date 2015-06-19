@@ -83,6 +83,7 @@ public class SampleService {
      * @param attribute
      * @param start
      * @param end
+     * @param onlyLatest
      * @return
      * @throws JEVisException
      */
@@ -96,7 +97,7 @@ public class SampleService {
             @QueryParam("from") String start,
             @QueryParam("until") String end,
             @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest
-                    ) throws JEVisException {
+    ) throws JEVisException {
 
         System.out.println("getSampples: " + id + "att: " + attribute);
         JEVisDataSource ds = JEVisConnectionCache.getInstance()
@@ -113,7 +114,7 @@ public class SampleService {
             return Response.status(Status.NOT_FOUND)
                     .entity("Attribute is not accessable").build();
         }
-        
+
         System.out.println("1");
         //yyyyMMdd'T'HHmmssZ
 //        DateTimeFormatter fmt = ISODateTimeFormat.basicOrdinalDateTimeNoMillis();
@@ -127,7 +128,7 @@ public class SampleService {
         }
         System.out.println("2");
 
-        if (onlyLatest == true)  {
+        if (onlyLatest == true) {
             // TODO: what to do if there are no samples?
             if (!att.hasSample()) {
                 return null;
@@ -153,7 +154,7 @@ public class SampleService {
 //            return getInBetweenl(att, startDate, endDate);
         }
     }
-    
+
     @GET
     @Path("/Files")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -165,7 +166,7 @@ public class SampleService {
             //@QueryParam("from") String start, //TODO: reimplement
             //@QueryParam("until") String end,
             @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest
-                    ) throws JEVisException {
+    ) throws JEVisException {
 
         JEVisDataSource ds = JEVisConnectionCache.getInstance()
                 .getDataSource(context.getUserPrincipal().getName());
@@ -185,13 +186,12 @@ public class SampleService {
             return Response.status(Status.NOT_FOUND)
                     .entity("Attribute has no samples").build();
         }
-        if(att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
+        if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
             //TODO: only implemented for files
             return Response.status(Status.SERVICE_UNAVAILABLE)
-                .entity("TODO: only implemented for files").build();
+                    .entity("TODO: only implemented for files").build();
         }
-        
-        
+
         if (onlyLatest) {
             JEVisFile file = att.getLatestSample().getValueAsFile();
             byte[] arr = file.getBytes();
@@ -200,13 +200,13 @@ public class SampleService {
                 bos.write(arr);
             } catch (IOException ex) {
                 return Response.status(Status.INTERNAL_SERVER_ERROR)
-                .entity("IOException while writing file content to buffer" + 
-                        "IOException: " + ex.getMessage()).build();
+                        .entity("IOException while writing file content to buffer"
+                                + "IOException: " + ex.getMessage()).build();
             }
 
             ResponseBuilder response = Response.ok(arr);
             response.header("Content-Disposition",
-                    "attachment; filename=\"" + file.getFilename() +"\"");
+                    "attachment; filename=\"" + file.getFilename() + "\"");
             return response.build();
 
         } else {
@@ -215,7 +215,7 @@ public class SampleService {
                     .entity("TODO: implement zipping of multiple files").build();
         }
     }
-    
+
     @POST
     @Path("/Files")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -227,7 +227,7 @@ public class SampleService {
             @PathParam("attribute") String attribute,
             @FormDataParam("file") InputStream uploadedInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail
-                    ) throws JEVisException {
+    ) throws JEVisException {
 
         JEVisDataSource ds = JEVisConnectionCache.getInstance()
                 .getDataSource(context.getUserPrincipal().getName());
@@ -246,57 +246,56 @@ public class SampleService {
             return Response.status(Status.NOT_FOUND)
                     .entity("Attribute has no samples").build();
         }
-        if(att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
+        if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
             //TODO: only implemented for files
             return Response.status(Status.SERVICE_UNAVAILABLE)
-                .entity("TODO: only implemented for files").build();
+                    .entity("TODO: only implemented for files").build();
         }
-        
+
         // Get the Filename from the header
         String filename = fileDetail.getFileName();
         if (filename == null || filename.isEmpty()) {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Empty filename").build();
         }
-        
+
         // Read file content into buffer
         //TODO: determine how large files are allowed to be
-        final int bufferSize = 1024*1024;
+        final int bufferSize = 1024 * 1024;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
         try {
             bytesRead = uploadedInputStream.read(buffer);
         } catch (IOException ex) {
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-            .entity("IOException while from InputStream" + 
-                    "IOException: " + ex.getMessage()).build();
+                    .entity("IOException while from InputStream"
+                            + "IOException: " + ex.getMessage()).build();
         }
         if (bytesRead < 1) {
             // something went wrong, or empty file
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-            .entity("Error while reading input-file").build();
+                    .entity("Error while reading input-file").build();
         }
         if (bytesRead >= bufferSize) {
             // Uploaded file was bigger than the buffer
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-            .entity("Uploaded file bigger than buffer-size").build();
+                    .entity("Uploaded file bigger than buffer-size").build();
         }
         byte[] fileContent = new byte[bytesRead];
         System.arraycopy(buffer, 0, fileContent, 0, bytesRead);
-        
+
         System.out.println("Received file: " + filename + " with length: " + bytesRead);
-        
+
         // create a new sample containing a file
         JEVisSample sample = att.buildSample(null, fileContent);
         JEVisFile jfile = sample.getValueAsFile();
         jfile.setFilename(filename);
         sample.commit();
-        
+
         return Response.status(Status.CREATED).build();
-        
+
         // Explanation Content type: http://stackoverflow.com/questions/20508788/do-i-need-content-type-application-octet-stream-for-file-download
         // Tutorial file-upload: http://www.mkyong.com/webservices/jax-rs/file-upload-example-in-jersey/
-        
     }
 
     /**

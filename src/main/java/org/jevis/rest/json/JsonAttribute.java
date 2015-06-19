@@ -35,6 +35,7 @@ public class JsonAttribute {
     private String begins;
     private String ends;
     private String unit;
+    private String displayUnit;
     private String period;
     private long sampleCount;
     private String latestValue;
@@ -76,6 +77,15 @@ public class JsonAttribute {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    @XmlElement(name = "displayUnit")
+    public String getDisplayUnit() {
+        return displayUnit;
+    }
+
+    public void setDisplayUnit(String displayUnit) {
+        this.displayUnit = displayUnit;
     }
 
     @XmlElement(name = "period")
