@@ -23,11 +23,8 @@ package org.jevis.rest.services;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,11 +51,9 @@ import org.jevis.api.JEVisException;
 import org.jevis.api.JEVisFile;
 import org.jevis.api.JEVisObject;
 import org.jevis.api.JEVisSample;
-import org.jevis.api.sql.JEVisFileSQL;
-import org.jevis.api.sql.JEVisSampleSQL;
+import org.jevis.commons.JEVisFileImp;
 import org.jevis.rest.JEVisConnectionCache;
 import org.jevis.rest.JsonFactory;
-import org.jevis.rest.json.JsonAttribute;
 import org.jevis.rest.json.JsonSample;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -287,9 +282,10 @@ public class SampleService {
         System.out.println("Received file: " + filename + " with length: " + bytesRead);
 
         // create a new sample containing a file
-        JEVisSample sample = att.buildSample(null, fileContent);
-        JEVisFile jfile = sample.getValueAsFile();
-        jfile.setFilename(filename);
+        JEVisFile jFile = new JEVisFileImp();
+        jFile.setFilename(filename);
+        jFile.setBytes(fileContent);
+        JEVisSample sample = att.buildSample(null, jFile);
         sample.commit();
 
         return Response.status(Status.CREATED).build();
