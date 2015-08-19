@@ -237,10 +237,6 @@ public class SampleService {
             return Response.status(Status.NOT_FOUND)
                     .entity("Attribute is not accessable").build();
         }
-        if (!att.hasSample()) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Attribute has no samples").build();
-        }
         if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
             //TODO: only implemented for files
             return Response.status(Status.SERVICE_UNAVAILABLE)
