@@ -357,8 +357,8 @@ public class SampleService {
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
             @QueryParam("from") String start,
-            @QueryParam("until") String end)
-    {
+            @QueryParam("until") String end,
+            @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest) {
 
         JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
         try {
@@ -367,11 +367,25 @@ public class SampleService {
 
             DateTime startDate = null;
             DateTime endDate = null;
-            if (start != null) {
-                startDate = fmt.parseDateTime(start);
-            }
-            if (end != null) {
-                endDate = fmt.parseDateTime(end);
+            if (onlyLatest) {
+                // delete the latest sample
+                if (!att.hasSample()) {
+                    return Response.status(Status.NOT_FOUND)
+                            .entity("Attribute has no samples").build();
+                }
+                
+                JEVisSample latestSample = att.getLatestSample();
+                DateTime timestamp = latestSample.getTimestamp();
+                startDate = timestamp;
+                endDate = timestamp;
+            } else {
+                // define the timerange to delete samples from
+                if (start != null) {
+                    startDate = fmt.parseDateTime(start);
+                }
+                if (end != null) {
+                    endDate = fmt.parseDateTime(end);
+                }
             }
 
             if (startDate == null && endDate == null) {
