@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
+import org.apache.commons.io.IOUtils;
 import org.jevis.api.JEVisAttribute;
 import org.jevis.api.JEVisConstants;
 import org.jevis.api.JEVisDataSource;
@@ -190,14 +191,6 @@ public class SampleService {
         if (onlyLatest) {
             JEVisFile file = att.getLatestSample().getValueAsFile();
             byte[] arr = file.getBytes();
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                bos.write(arr);
-            } catch (IOException ex) {
-                return Response.status(Status.INTERNAL_SERVER_ERROR)
-                        .entity("IOException while writing file content to buffer"
-                                + "IOException: " + ex.getMessage()).build();
-            }
 
             ResponseBuilder response = Response.ok(arr);
             response.header("Content-Disposition",
@@ -250,32 +243,22 @@ public class SampleService {
                     .entity("Empty filename").build();
         }
 
-        // Read file content into buffer
-        //TODO: determine how large files are allowed to be
-        final int bufferSize = 1024 * 1024;
-        byte[] buffer = new byte[bufferSize];
-        int bytesRead;
+        // Read file content from InputStream into byte-array
+        byte[] fileContent;
         try {
-            bytesRead = uploadedInputStream.read(buffer);
+            fileContent = IOUtils.toByteArray(uploadedInputStream);
         } catch (IOException ex) {
             return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("IOException while from InputStream"
                             + "IOException: " + ex.getMessage()).build();
         }
-        if (bytesRead < 1) {
+        if (fileContent.length < 1) {
             // something went wrong, or empty file
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error while reading input-file").build();
+                    .entity("Error while reading input-file. Got empty file").build();
         }
-        if (bytesRead >= bufferSize) {
-            // Uploaded file was bigger than the buffer
-            return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Uploaded file bigger than buffer-size").build();
-        }
-        byte[] fileContent = new byte[bytesRead];
-        System.arraycopy(buffer, 0, fileContent, 0, bytesRead);
-
-        System.out.println("Received file: " + filename + " with length: " + bytesRead);
+        
+        System.out.println("Received file: " + filename + " with length: " + fileContent.length);
 
         // create a new sample containing a file
         JEVisFile jFile = new JEVisFileImp();
@@ -284,7 +267,8 @@ public class SampleService {
         JEVisSample sample = att.buildSample(null, jFile);
         sample.commit();
 
-        return Response.status(Status.CREATED).build();
+        return Response.status(Status.CREATED)
+                .entity("Received file: " + filename + " with length: " + fileContent.length).build();
 
         // Explanation Content type: http://stackoverflow.com/questions/20508788/do-i-need-content-type-application-octet-stream-for-file-download
         // Tutorial file-upload: http://www.mkyong.com/webservices/jax-rs/file-upload-example-in-jersey/
@@ -373,7 +357,8 @@ public class SampleService {
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
             @QueryParam("from") String start,
-            @QueryParam("until") String end) {
+            @QueryParam("until") String end)
+    {
 
         JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
         try {
