@@ -22,13 +22,13 @@ package org.jevis.rest;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.ext.Provider;
+import org.joda.time.DateTime;
 
 /**
- * This Filter handels the Authentification with the API.
  *
- * see web.xml for activation
  *
  * @author Florian Simon <florian.simon@envidatec.com>
  */
@@ -43,11 +43,13 @@ public class DebugFilter implements ContainerRequestFilter {
             return containerRequest;
         }
 
-        System.out.println("Debugfilter");
-        System.out.println("Path: " + containerRequest.getPath());
-        System.out.println("FormParameters: " + containerRequest.getFormParameters().toString());
-        System.out.println("MediaType: " + containerRequest.getMediaType());
-        System.out.println("MediaType: " + containerRequest.getMethod());
+        String base64Auth = "";
+        if (containerRequest.getRequestHeader("authorization") != null && !containerRequest.getRequestHeader("authorization").isEmpty()) {
+            base64Auth = containerRequest.getRequestHeader("authorization").get(0);
+        }
+        String mesg = String.format("Request Time:[%s]  Path:[%s]  Method:[%s]  MediaType:[%s]  Auth:[%s]", DateTime.now().toString(), containerRequest.getPath(), containerRequest.getMethod(), containerRequest.getMediaType(), base64Auth);
+
+        Logger.getLogger(DebugFilter.class.getName()).log(Level.INFO, mesg);
 
         return containerRequest;
     }

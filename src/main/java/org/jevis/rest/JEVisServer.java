@@ -20,14 +20,13 @@
  */
 package org.jevis.rest;
 
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.http.server.HttpServer;
-
+//import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+//import com.sun.jersey.api.core.PackagesResourceConfig;
+//import com.sun.jersey.api.core.ResourceConfig;
+//import java.io.IOException;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
+//import org.glassfish.grizzly.http.server.HttpServer;
 /**
  * Main class for the JEVisWebsevice. THis class is not in use in this version.
  * This version used an build in tomcat(maven plugin) because it was so dam
@@ -37,20 +36,19 @@ import org.glassfish.grizzly.http.server.HttpServer;
  */
 public class JEVisServer {
 
-    public JEVisServer() {
-        // Create and fire up an HTTP server
-
-        ResourceConfig rc = new PackagesResourceConfig("org.jevis.rest.services");
-        try {
-            HttpServer server = GrizzlyServerFactory.createHttpServer("http://localhost:9999", rc);
-        } catch (IOException ex) {
-            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalArgumentException ex) {
-            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NullPointerException ex) {
-            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
+//    public JEVisServer() {
+//        // Create and fire up an HTTP server
+//
+//        ResourceConfig rc = new PackagesResourceConfig("org.jevis.rest.services");
+//        try {
+//            HttpServer server = GrizzlyServerFactory.createHttpServer("http://localhost:9999", rc);
+//        } catch (IOException ex) {
+//            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (IllegalArgumentException ex) {
+//            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (NullPointerException ex) {
+//            Logger.getLogger(JEVisServer.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//
+//    }
 }

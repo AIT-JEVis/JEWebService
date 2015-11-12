@@ -2,14 +2,25 @@
 <!-- const.xml -->
 <config>
     <datasource>
-        <url>openjevis.org</url>
-        <port>13306</port>
+        <url>localhost</url>
+        <port>3306</port>
         <login>jevis</login>
         <password>jevistest</password>
 	<schema>jevis</schema>
     </datasource>
+
+    <sysadmin>
+	<username>Sys Admin</username>
+	<password>jevis</password>
+    </sysadmin>
+	
+    <registration>
+	<root>5</root>
+	<demogroup>1773</demogroup>
+	<apikey>Ohcb3234kbCKJS93nCVHJFQ23b345js8g3b</apikey>
+    </registration>
+
     <webservice>
         <port>8080</port>
-        
     </webservice>    
 </config>

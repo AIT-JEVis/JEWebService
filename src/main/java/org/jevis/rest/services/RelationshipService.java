@@ -22,11 +22,17 @@ package org.jevis.rest.services;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.security.sasl.AuthenticationException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.jevis.api.JEVisDataSource;
 import org.jevis.api.JEVisException;
 import org.jevis.api.JEVisObject;
@@ -36,6 +42,7 @@ import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonRelationship;
 
 /**
+ * TODO: is this service in use yet?
  *
  * @author Florian Simon<florian.simon@openjevis.org>
  */
@@ -49,20 +56,32 @@ public class RelationshipService {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<JsonRelationship> get(
-            @PathParam("id") long id) throws JEVisException {
-        System.out.println("get relatuionship+ " + id);
-        List<JsonRelationship> jsons = new LinkedList<JsonRelationship>();
+    public Response get(
+            @PathParam("id") long id,
+            @Context HttpHeaders httpHeaders) throws JEVisException {
 
-        JEVisDataSource ds = Config.getDS("Sys Admin", "jevis");
+        JEVisDataSource ds = null;
+        try {
+            Logger.getLogger(RelationshipService.class.getName()).log(Level.INFO, "GET Relationship: " + id);
+            ds = Config.getJEVisDS(httpHeaders);
 
-        JEVisObject object = ds.getObject(id);
+            List<JsonRelationship> jsons = new LinkedList<JsonRelationship>();
 
-        for (JEVisRelationship r : object.getRelationships()) {
-            jsons.add(JsonFactory.buildRelationship(r));
+            JEVisObject object = ds.getObject(id);
+
+            for (JEVisRelationship r : object.getRelationships()) {
+                jsons.add(JsonFactory.buildRelationship(r));
+            }
+            return Response.ok(jsons).build();
+
+        } catch (JEVisException jex) {
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
         }
-
-        return jsons;
 
     }
 }

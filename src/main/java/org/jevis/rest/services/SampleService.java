@@ -22,12 +22,14 @@ package org.jevis.rest.services;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.security.sasl.AuthenticationException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -43,7 +45,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.io.IOUtils;
 import org.jevis.api.JEVisAttribute;
 import org.jevis.api.JEVisConstants;
@@ -53,7 +54,7 @@ import org.jevis.api.JEVisFile;
 import org.jevis.api.JEVisObject;
 import org.jevis.api.JEVisSample;
 import org.jevis.commons.JEVisFileImp;
-import org.jevis.rest.JEVisConnectionCache;
+import org.jevis.rest.Config;
 import org.jevis.rest.JsonFactory;
 import org.jevis.rest.json.JsonSample;
 import org.joda.time.DateTime;
@@ -86,7 +87,6 @@ public class SampleService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSampples(
-            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
@@ -95,67 +95,73 @@ public class SampleService {
             @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest
     ) throws JEVisException {
 
-        System.out.println("getSampples: " + id + "att: " + attribute);
-        JEVisDataSource ds = JEVisConnectionCache.getInstance()
-                .getDataSource(context.getUserPrincipal().getName());
+        JEVisDataSource ds = null;
+        try {
+            Logger.getLogger(SampleService.class.getName()).log(Level.INFO, "GET Sample for Object: " + id + " Attribute: " + attribute);
 
-        JEVisObject obj = ds.getObject(id);
-        if (obj == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Object is not accessable").build();
-        }
+            ds = Config.getJEVisDS(httpHeaders);
 
-        JEVisAttribute att = obj.getAttribute(attribute);
-        if (att == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Attribute is not accessable").build();
-        }
-
-        System.out.println("1");
-        //yyyyMMdd'T'HHmmssZ
-//        DateTimeFormatter fmt = ISODateTimeFormat.basicOrdinalDateTimeNoMillis();
-        DateTime startDate = null;
-        DateTime endDate = null;
-        if (start != null) {
-            startDate = fmt.parseDateTime(start);
-        }
-        if (end != null) {
-            endDate = fmt.parseDateTime(end);
-        }
-        System.out.println("2");
-
-        if (onlyLatest == true) {
-            // TODO: what to do if there are no samples?
-            if (!att.hasSample()) {
-                return null;
+            JEVisObject obj = ds.getObject(id);
+            if (obj == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Object is not accessable").build();
             }
-            JEVisSample sample = att.getLatestSample();
-            return Response.ok(JsonFactory.buildSample(sample)).build();
-        }
-        if (start == null && end == null) {
-            // TODO: if there are no samples the call returns as body "null"
-            List<JsonSample> list = getAll(att);
-            System.out.println("List<JsonSample> list: " + list.size());
-            JsonSample[] returnList = list.toArray(new JsonSample[list.size()]);
 
-            System.out.println("returnList: " + returnList.length);
-            System.out.println("666");
-            return Response.ok(returnList).build();
+            JEVisAttribute att = obj.getAttribute(attribute);
+            if (att == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Attribute is not accessable").build();
+            }
+
+            //yyyyMMdd'T'HHmmssZ
+//        DateTimeFormatter fmt = ISODateTimeFormat.basicOrdinalDateTimeNoMillis();
+            DateTime startDate = null;
+            DateTime endDate = null;
+            if (start != null) {
+                startDate = fmt.parseDateTime(start);
+            }
+            if (end != null) {
+                endDate = fmt.parseDateTime(end);
+            }
+
+            if (onlyLatest == true) {
+                // TODO: what to do if there are no samples?
+                if (!att.hasSample()) {
+                    return null;
+                }
+                JEVisSample sample = att.getLatestSample();
+                return Response.ok(JsonFactory.buildSample(sample)).build();
+            }
+            if (start == null && end == null) {
+                // TODO: if there are no samples the call returns as body "null"
+                List<JsonSample> list = getAll(att);
+                JsonSample[] returnList = list.toArray(new JsonSample[list.size()]);
+
+                return Response.ok(returnList).build();
 //            return getAll(att);
-        } else {
-            List<JsonSample> list = getInBetween(att, startDate, endDate);
-            JsonSample[] returnList = list.toArray(new JsonSample[list.size()]);
+            } else {
+                List<JsonSample> list = getInBetween(att, startDate, endDate);
+                JsonSample[] returnList = list.toArray(new JsonSample[list.size()]);
 
-            return Response.ok(returnList).build();
+                return Response.ok(returnList).build();
 //            return getInBetweenl(att, startDate, endDate);
+            }
+
+        } catch (JEVisException jex) {
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
         }
+
     }
 
     @GET
     @Path("/Files")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getSampleFiles(
-            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
@@ -164,44 +170,56 @@ public class SampleService {
             @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest
     ) throws JEVisException {
 
-        JEVisDataSource ds = JEVisConnectionCache.getInstance()
-                .getDataSource(context.getUserPrincipal().getName());
+        JEVisDataSource ds = null;
+        try {
+            Logger.getLogger(SampleService.class.getName()).log(Level.INFO, "GET File: " + id + " Attribute: " + attribute);
 
-        JEVisObject obj = ds.getObject(id);
-        if (obj == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Object is not accessable").build();
+            ds = Config.getJEVisDS(httpHeaders);
+
+            JEVisObject obj = ds.getObject(id);
+            if (obj == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Object is not accessable").build();
+            }
+
+            JEVisAttribute att = obj.getAttribute(attribute);
+            if (att == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Attribute is not accessable").build();
+            }
+            if (!att.hasSample()) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Attribute has no samples").build();
+            }
+            if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
+                //TODO: only implemented for files
+                return Response.status(Status.SERVICE_UNAVAILABLE)
+                        .entity("TODO: only implemented for files").build();
+            }
+
+            if (onlyLatest) {
+                JEVisFile file = att.getLatestSample().getValueAsFile();
+                byte[] arr = file.getBytes();
+
+                ResponseBuilder response = Response.ok(arr);
+                response.header("Content-Disposition",
+                        "attachment; filename=\"" + file.getFilename() + "\"");
+                return response.build();
+
+            } else {
+                //TODO: implement zipping of multiple files
+                return Response.status(Status.SERVICE_UNAVAILABLE)
+                        .entity("TODO: implement zipping of multiple files").build();
+            }
+        } catch (JEVisException jex) {
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
         }
 
-        JEVisAttribute att = obj.getAttribute(attribute);
-        if (att == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Attribute is not accessable").build();
-        }
-        if (!att.hasSample()) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Attribute has no samples").build();
-        }
-        if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
-            //TODO: only implemented for files
-            return Response.status(Status.SERVICE_UNAVAILABLE)
-                    .entity("TODO: only implemented for files").build();
-        }
-
-        if (onlyLatest) {
-            JEVisFile file = att.getLatestSample().getValueAsFile();
-            byte[] arr = file.getBytes();
-
-            ResponseBuilder response = Response.ok(arr);
-            response.header("Content-Disposition",
-                    "attachment; filename=\"" + file.getFilename() + "\"");
-            return response.build();
-
-        } else {
-            //TODO: implement zipping of multiple files
-            return Response.status(Status.SERVICE_UNAVAILABLE)
-                    .entity("TODO: implement zipping of multiple files").build();
-        }
     }
 
     @POST
@@ -209,7 +227,6 @@ public class SampleService {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response postSampleFiles(
-            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
@@ -217,58 +234,68 @@ public class SampleService {
             @FormDataParam("file") FormDataContentDisposition fileDetail
     ) throws JEVisException {
 
-        JEVisDataSource ds = JEVisConnectionCache.getInstance()
-                .getDataSource(context.getUserPrincipal().getName());
-
-        JEVisObject obj = ds.getObject(id);
-        if (obj == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Object is not accessable").build();
-        }
-        JEVisAttribute att = obj.getAttribute(attribute);
-        if (att == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("Attribute is not accessable").build();
-        }
-        if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
-            //TODO: only implemented for files
-            return Response.status(Status.SERVICE_UNAVAILABLE)
-                    .entity("TODO: only implemented for files").build();
-        }
-
-        // Get the Filename from the header
-        String filename = fileDetail.getFileName();
-        if (filename == null || filename.isEmpty()) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Empty filename").build();
-        }
-
-        // Read file content from InputStream into byte-array
-        byte[] fileContent;
+        JEVisDataSource ds = null;
         try {
-            fileContent = IOUtils.toByteArray(uploadedInputStream);
-        } catch (IOException ex) {
-            return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("IOException while from InputStream"
-                            + "IOException: " + ex.getMessage()).build();
-        }
-        if (fileContent.length < 1) {
-            // something went wrong, or empty file
-            return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error while reading input-file. Got empty file").build();
-        }
-        
-        System.out.println("Received file: " + filename + " with length: " + fileContent.length);
+            Logger.getLogger(SampleService.class.getName()).log(Level.INFO, "GET Files: " + id + " Attribute: " + attribute);
 
-        // create a new sample containing a file
-        JEVisFile jFile = new JEVisFileImp();
-        jFile.setFilename(filename);
-        jFile.setBytes(fileContent);
-        JEVisSample sample = att.buildSample(null, jFile);
-        sample.commit();
+            ds = Config.getJEVisDS(httpHeaders);
 
-        return Response.status(Status.CREATED)
-                .entity("Received file: " + filename + " with length: " + fileContent.length).build();
+            JEVisObject obj = ds.getObject(id);
+            if (obj == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Object is not accessable").build();
+            }
+            JEVisAttribute att = obj.getAttribute(attribute);
+            if (att == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Attribute is not accessable").build();
+            }
+            if (att.getType().getPrimitiveType() != JEVisConstants.PrimitiveType.FILE) {
+                //TODO: only implemented for files
+                return Response.status(Status.SERVICE_UNAVAILABLE)
+                        .entity("TODO: only implemented for files").build();
+            }
+
+            // Get the Filename from the header
+            String filename = fileDetail.getFileName();
+            if (filename == null || filename.isEmpty()) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Empty filename").build();
+            }
+
+            // Read file content from InputStream into byte-array
+            byte[] fileContent;
+            try {
+                fileContent = IOUtils.toByteArray(uploadedInputStream);
+            } catch (IOException ex) {
+                return Response.status(Status.INTERNAL_SERVER_ERROR)
+                        .entity("IOException while from InputStream"
+                                + "IOException: " + ex.getMessage()).build();
+            }
+            if (fileContent.length < 1) {
+                // something went wrong, or empty file
+                return Response.status(Status.INTERNAL_SERVER_ERROR)
+                        .entity("Error while reading input-file. Got empty file").build();
+            }
+
+            // create a new sample containing a file
+            JEVisFile jFile = new JEVisFileImp();
+            jFile.setFilename(filename);
+            jFile.setBytes(fileContent);
+            JEVisSample sample = att.buildSample(null, jFile);
+            sample.commit();
+
+            return Response.status(Status.CREATED)
+                    .entity("Received file: " + filename + " with length: " + fileContent.length).build();
+        } catch (JEVisException jex) {
+            System.out.println("Error while fetching attribute: ");
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
+        }
 
         // Explanation Content type: http://stackoverflow.com/questions/20508788/do-i-need-content-type-application-octet-stream-for-file-download
         // Tutorial file-upload: http://www.mkyong.com/webservices/jax-rs/file-upload-example-in-jersey/
@@ -288,7 +315,6 @@ public class SampleService {
         for (JEVisSample sample : att.getSamples(start, end)) {
             samples.add(JsonFactory.buildSample(sample));
         }
-        System.out.println("getInBetween: " + samples.size());
         return samples;
     }
 
@@ -304,36 +330,30 @@ public class SampleService {
         for (JEVisSample sample : att.getAllSamples()) {
             samples.add(JsonFactory.buildSample(sample));
         }
-        System.out.println("getAll: " + samples.size());
         return samples;
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postSamples(
-            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
             List<JsonSample> samples) {
 
-        System.out.println("postSamples");
-
-        System.out.println("Sample: ");
-        for (JsonSample sample : samples) {
-            System.out.println("sample: " + sample.getTs() + " value: " + sample.getValue() + " note: " + sample.getNote());
-        }
-
-        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+        JEVisDataSource ds = null;
         try {
-            System.out.println("DS is connected? " + ds.isConnectionAlive());
-            System.out.println("getObject: " + id);
+            Logger.getLogger(SampleService.class.getName()).log(Level.INFO, "POST Samples for Object: " + id + " Attribute: " + attribute);
+
+            ds = Config.getJEVisDS(httpHeaders);
+
+//            for (JsonSample sample : samples) {
+//                System.out.println("sample: " + sample.getTs() + " value: " + sample.getValue() + " note: " + sample.getNote());
+//            }
             JEVisObject object = ds.getObject(id);
-            System.out.println("done");
             JEVisAttribute att = object.getAttribute(attribute);
 
             List<JEVisSample> newSamples = toJEVisSample(att, samples);
-            System.out.println("Build new samples: " + newSamples.size());
             att.addSamples(newSamples);
 
             if (newSamples.size() > 0) {
@@ -342,17 +362,19 @@ public class SampleService {
                 return Response.status(Status.NOT_MODIFIED).build();
             }
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return Response.status(Status.NOT_FOUND).entity(ex.getMessage()).build();
-
+        } catch (JEVisException jex) {
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
         }
 
     }
 
     @DELETE
     public Response deleteSamples(
-            @Context SecurityContext context,
             @Context HttpHeaders httpHeaders,
             @PathParam("id") long id,
             @PathParam("attribute") String attribute,
@@ -360,8 +382,12 @@ public class SampleService {
             @QueryParam("until") String end,
             @DefaultValue("false") @QueryParam("onlyLatest") boolean onlyLatest) {
 
-        JEVisDataSource ds = JEVisConnectionCache.getInstance().getDataSource(context.getUserPrincipal().getName());
+        JEVisDataSource ds = null;
         try {
+            Logger.getLogger(SampleService.class.getName()).log(Level.INFO, "DELETE Sample for Object: " + id + " Attribute: " + attribute);
+
+            ds = Config.getJEVisDS(httpHeaders);
+
             JEVisObject object = ds.getObject(id);
             JEVisAttribute att = object.getAttribute(attribute);
 
@@ -373,7 +399,7 @@ public class SampleService {
                     return Response.status(Status.NOT_FOUND)
                             .entity("Attribute has no samples").build();
                 }
-                
+
                 JEVisSample latestSample = att.getLatestSample();
                 DateTime timestamp = latestSample.getTimestamp();
                 startDate = timestamp;
@@ -396,11 +422,15 @@ public class SampleService {
 
             return Response.status(Status.OK).build();
 
-        } catch (JEVisException ex) {
-            ex.printStackTrace();
-            return Response.status(Status.NOT_FOUND).entity(ex.getMessage()).build();
-
+        } catch (JEVisException jex) {
+            jex.printStackTrace();
+            return Response.serverError().build();
+        } catch (AuthenticationException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(ex.getMessage()).build();
+        } finally {
+            Config.CloseDS(ds);
         }
+
     }
 
     public List<JEVisSample> toJEVisSample(JEVisAttribute att, List<JsonSample> jsonSamples) {
@@ -426,8 +456,7 @@ public class SampleService {
                 }
 
             } catch (JEVisException ex) {
-                System.out.println("JEVisException while converting JsonSamples: "
-                        + ex.getMessage());
+                ex.printStackTrace();
             }
 
         }

@@ -20,17 +20,15 @@
             <param-name>com.sun.jersey.config.property.packages</param-name>
             <param-value>org.jevis.rest</param-value>
         </init-param>
+        <!--        
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerRequestFilter</param-name>
+            <param-value>org.jevis.rest.DebugFilter</param-value>
+        </init-param>
+        -->
         <init-param>
             <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-            <param-value>com.sun.jersey.api.container.filter.LoggingFilter;org.jevis.rest.AuthFilter</param-value>
-        </init-param>
-        <init-param>
-            <param-name>com.sun.jersey.spi.container.ContainerResponseFilter</param-name>
-            <param-value>org.jevis.rest.ResponseFilter</param-value>
-        </init-param>
-        <init-param>
-            <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;org.jevis.rest.DebugFilter</param-value>
         </init-param>
         <init-param>
             <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>

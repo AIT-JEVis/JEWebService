@@ -91,11 +91,14 @@ public class JsonFactory {
             jatt.setSampleCount(att.getSampleCount());
             //TODO: handle other types appropriately
             JEVisSample sample = att.getLatestSample();
-            if (att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
-                jatt.setLatestValue(sample.getValueAsFile().getFilename());
-            } else {
-                jatt.setLatestValue(sample.getValueAsString());
+            if (sample != null) {
+                if (att.getType().getPrimitiveType() == JEVisConstants.PrimitiveType.FILE) {
+                    jatt.setLatestValue(sample.getValueAsFile().getFilename());
+                } else {
+                    jatt.setLatestValue(sample.getValueAsString());
+                }
             }
+
         }
         jatt.setPeriod(att.getInputSampleRate().toString());
         jatt.setType(att.getType().getName());
@@ -159,8 +162,14 @@ public class JsonFactory {
      */
     public static List<JsonObject> buildObject(List<JEVisObject> objs) throws JEVisException {
         List<JsonObject> jObjects = new ArrayList<JsonObject>();
+
         for (JEVisObject obj : objs) {
-            jObjects.add(buildObject(obj));
+            try {
+                jObjects.add(buildObject(obj));
+            } catch (Exception ex) {
+                System.out.print("Error while building json for ");
+                System.out.println(obj.getID() + "  ex:" + ex);
+            }
 
         }
 
